@@ -1,11 +1,18 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { Menu, User } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, User, LogOut, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@prisma/client';
 import { signOut } from 'next-auth/react';
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface NavbarProps {
   role: UserRole;
@@ -14,6 +21,8 @@ interface NavbarProps {
 
 export function Navbar({ role, onMenuClick }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const basePath = role === 'ADMIN' ? '/admin' : '/student';
 
   const getPageTitle = () => {
     const path = pathname.split('/').pop();
@@ -59,14 +68,31 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
           <div className="flex items-center gap-2">
             <NotificationDropdown role={role} />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => signOut({ callbackUrl: '/' })}
-            >
-              <User className="h-5 w-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-auto min-w-[120px] text-right">
+                <DropdownMenuItem onClick={() => router.push(`${basePath}/profile`)} className="flex-row-reverse">
+                  <UserCircle className="ml-2 h-4 w-4" />
+                  <span>پروفایل</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="flex-row-reverse text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="ml-2 h-4 w-4" />
+                  <span>خروج</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
