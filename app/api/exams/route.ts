@@ -26,9 +26,33 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = examSchema.parse(body);
 
+    // Create exam
     const exam = await db.exam.create({
       data: validatedData,
     });
+
+    // Find all students in the same term
+    const students = await db.student.findMany({
+      where: {
+        term: validatedData.term,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    // Create notifications for all students in the term
+    await Promise.all(
+      students.map((student) =>
+        db.notification.create({
+          data: {
+            title: 'آزمون جدید',
+            message: `آزمون ${exam.title} برای ترم ${exam.term} تعریف شده است.`,
+            userId: student.userId,
+          },
+        })
+      )
+    );
 
     return NextResponse.json(exam);
   } catch (error) {
