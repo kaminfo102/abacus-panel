@@ -27,7 +27,10 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent',
+       'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent',
+      // 'flex h-12 sm:h-14 md:h-16 rounded-lg overflow-hidden border border-input bg-background',
+      //           'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1',
+      //           'transition-all duration-200 touch-none select-none',
       inset && 'pl-8',
       className
     )}

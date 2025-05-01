@@ -73,28 +73,28 @@ export function Sidebar({ role, isOpen, onOpenChange }: SidebarProps) {
 
       <div
         className={cn(
-          "fixed inset-y-0 right-0 z-40 flex w-64 flex-col bg-white border-l shadow-sm dark:bg-gray-950 dark:border-gray-800",
+          "fixed inset-y-0 right-0 z-40 flex w-72 flex-col bg-white border-l shadow-lg dark:bg-gray-900 dark:border-gray-800",
           "transition-all duration-300 ease-in-out",
           "md:relative md:translate-x-0",
-          isOpen ? "translate-x-0" : "translate-x-64"
+          isOpen ? "translate-x-0" : "translate-x-72"
         )}
       >
-        <div className="flex h-16 items-center border-b px-4 dark:border-gray-800">
-          <h2 className="text-lg font-bold">
+        <div className="flex h-16 items-center border-b px-6 dark:border-gray-800">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             {isAdmin ? 'پنل مدیریت' : 'پنل دانش‌آموز'}
           </h2>
         </div>
-        <div className="flex-1 overflow-auto py-4">
-          <nav className="grid gap-1 px-2">
+        <div className="flex-1 overflow-auto py-6">
+          <nav className="grid gap-2 px-4">
             {routes.map((route) => (
               <Link
                 key={route.href}
                 href={route.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
                   pathname === route.href
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground"
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 )}
                 onClick={() => {
                   if (isOpen) {
@@ -102,19 +102,19 @@ export function Sidebar({ role, isOpen, onOpenChange }: SidebarProps) {
                   }
                 }}
               >
-                <route.icon className="h-4 w-4" />
+                <route.icon className="h-5 w-5" />
                 {route.label}
               </Link>
             ))}
           </nav>
         </div>
-        <div className="border-t p-4 dark:border-gray-800">
+        <div className="border-t p-6 dark:border-gray-800">
           <Button
             variant="outline"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 h-11 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/50"
             onClick={() => signOut({ callbackUrl: '/' })}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-5 w-5" />
             خروج
           </Button>
         </div>

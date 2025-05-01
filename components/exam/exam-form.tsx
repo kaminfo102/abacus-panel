@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/inputNum';
 import {
   Form,
   FormControl,
@@ -26,8 +27,12 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { STUDENT_TERMS } from '@/lib/constants';
-import { Calculator, Clock, Grid, Hash, ListChecks, Type } from 'lucide-react';
+import { Calculator, Clock, Grid, Hash, Info, ListChecks, Type } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import type { ExamSettings, Operator } from "@/types/exam";
+import { CheckboxM } from '../ui/checkboxM';
+import { Label } from '../ui/label';
+import { OPERATOR_LABELS } from '@/types/constants';
 
 const formSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -73,12 +78,21 @@ export function ExamForm({ initialData }: ExamFormProps) {
       
       const method = isEditing ? 'PATCH' : 'POST';
 
+      const formData = {
+        ...values,
+        digitCount: settings.digitCount,
+        rowCount: settings.rowCount,
+        itemsPerRow: settings.itemsPerRow,
+        timeLimit: settings.timeLimit,
+        operators: settings.operators.join(','),
+      };
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -107,13 +121,66 @@ export function ExamForm({ initialData }: ExamFormProps) {
     }
   };
 
+  const updateSetting = <K extends keyof ExamSettings>(
+    key: K,
+    value: ExamSettings[K]
+  ) => {
+    setSettings(prev => ({...prev, [key]: value }));
+  };
+
+  const GuideItem = ({ text }: { text: string }) => (
+    <li className="flex items-center gap-2 text-sm">
+      <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
+      <span>{text}</span>
+    </li>
+  );
+
+  const DEFAULT_SETTINGS: ExamSettings = {
+    digitCount: 1,
+    rowCount: 10,
+    timeLimit: 60,
+    operators: [`+`,`-`],
+    itemsPerRow: 2
+  };
+
+  const toggleOperator = (operator: Operator) => {
+    setSettings(prev => ({...prev,
+        operators: prev.operators.includes(operator)
+        ? prev.operators.filter(op => op !== operator)
+        : [...prev.operators, operator]
+        }));
+  };
+
+  const [settings, setSettings] = useState<ExamSettings>(DEFAULT_SETTINGS);
+
+  interface ExamSettingsProps {
+    onStart: (settings: ExamSettings) => void;
+  }
+
+  const LIMITS = {
+    digitCount: { min: 1, max: 5 },
+    rowCount: { min: 5, max: 20 },
+    timeLimit: { min: 1, max: 60 },
+    itemsPerRow: { min: 2, max: 10 }
+  };
+
   return (
-    <Card>
-      <CardContent className="pt-6">
+    <Card className="p-8 max-w-4xl mx-auto">
+      {/* راهنمای تکمیل فرم */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
+          <h3 className="font-semibold text-blue-700 mb-3">راهنمای تکمیل فرم</h3>
+          <ul className="space-y-2 text-blue-600">
+            <GuideItem text="تعداد ارقام: تعیین کننده حداکثر رقم‌های اعداد در محاسبات" />
+            <GuideItem text="تعداد سوال: مشخص کننده تعداد کل سوالات آزمون" />
+            <GuideItem text="تعداد آیتم: تعداد اعداد در هر سطر برای محاسبه" />
+            <GuideItem text="مدت زمان: زمان کل آزمون به دقیقه" />
+          </ul>
+        </div>
+      <CardContent className="pt-3">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <FormField
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
+          <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
@@ -130,6 +197,39 @@ export function ExamForm({ initialData }: ExamFormProps) {
                 )}
               />
 
+
+                            <FormField
+                              control={form.control}
+                              name="term"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ترم</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="text-right [&>span]:text-right">
+                                        <SelectValue placeholder="ترم را انتخاب کنید" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="text-right">
+                                      {STUDENT_TERMS.map((term) => (
+                                        <SelectItem key={term} value={term} className="text-right">
+                                          {term}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription>
+                                    آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+          </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              
+
               <FormField
                 control={form.control}
                 name="digitCount"
@@ -140,7 +240,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       تعداد ارقام
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" placeholder="تعداد ارقام" {...field} />
+                      <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
+                      
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,10 +255,11 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <ListChecks className="h-4 w-4" />
-                      تعداد ردیف
+                      تعداد آیتم
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" placeholder="تعداد ردیف" {...field} />
+                      <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
+                      
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,7 +276,17 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       تعداد آیتم در هر ردیف
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" placeholder="تعداد آیتم در هر ردیف" {...field} />
+                    <NumberInput
+                                id="rowCount"
+                                value={settings.rowCount}
+                                onChange={(e) => updateSetting('rowCount', parseInt(e.toString()))}
+                                min={LIMITS.rowCount.min}
+                                max={LIMITS.rowCount.max}
+                                step={1}
+                                className="w-full min-w-[120px]"
+                                
+                            />
+                      {/* <Input type="number" min="1" placeholder="تعداد آیتم در هر ردیف" {...field} /> */}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -188,10 +300,20 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      محدودیت زمانی (ثانیه)
+                      محدودیت زمانی (دقیقه)
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" min="30" placeholder="محدودیت زمانی" {...field} />
+                    <NumberInput
+                                id="timeLimit"
+                                value={settings.timeLimit / 60}
+                                onChange={(e) => updateSetting('timeLimit', parseInt(e.toString()) * 60)}
+                                min={LIMITS.timeLimit.min}
+                                max={LIMITS.timeLimit.max}
+                                step={1}
+                                className="w-full min-w-[120px]"
+                                
+                            />
+                      
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,56 +330,57 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       عملگرها
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="مثال: +,-,*" {...field} />
+                       {/* بخش چک‌باکس‌ها */}
+                        <div className="bg-slate-50 p-6 rounded-xl">
+                            <h3 className="font-semibold text-lg text-slate-700 mb-4">عملگرهای مجاز</h3>
+                            <div className="grid grid-cols-2 gap-6">
+                                {(['+', '-', '*', '/'] as Operator[]).map((op) => (
+                                    <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
+                                        <CheckboxM
+                                            id={`op-${op}`}
+                                            checked={settings.operators.includes(op)}
+                                            onCheckedChange={() => toggleOperator(op)}
+                                        />
+                                        <Label
+                                            htmlFor={`op-${op}`}
+                                            className="text-sm font-medium cursor-pointer"
+                                        >
+                                            {OPERATOR_LABELS[op]}
+                                        </Label>
+                                    </div>
+                                ))}
+                            </div>
+                      </div>
+                      
                     </FormControl>
-                    <FormDescription>
-                      عملگرها را با کاما از هم جدا کنید
-                    </FormDescription>
+                    
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="term"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ترم</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="ترم را انتخاب کنید" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {STUDENT_TERMS.map((term) => (
-                          <SelectItem key={term} value={term}>
-                            {term}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
             </div>
+            
+            
+            
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-4 mt-8 w-full ">
               <Button 
                 variant="outline" 
                 type="button" 
                 onClick={() => router.back()}
                 disabled={isLoading}
+                className="h-12 px-8 text-lg"
               >
                 انصراف
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="h-12 px-8 text-lg"
+              >
+                {isLoading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
                 {isEditing ? 'بروزرسانی آزمون' : 'ایجاد آزمون'}
               </Button>
             </div>

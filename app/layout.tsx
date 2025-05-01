@@ -25,8 +25,8 @@ const vazirmatn = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'سامانه مدیریت دانش آموزان',
-  description: 'سامانه مدیریت دانش آموزان با قابلیت تعریف فعالیت‌ها',
+  title: 'سامانه آزمون محاسبات ذهنی با چرتکه کودکان هوشمند کردستان',
+  description: 'سامانه آزمون محاسبات ذهنی با چرتکه کودکان هوشمند کردستان',
 };
 
 export default function RootLayout({

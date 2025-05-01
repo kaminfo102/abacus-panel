@@ -102,16 +102,18 @@ export function LoginForm({ role }: LoginFormProps) {
             name="nationalId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>کد ملی</FormLabel>
+                <FormLabel className="text-right block">کد ملی</FormLabel>
                 <FormControl>
                   <Input 
                     type="text" 
                     placeholder="کد ملی خود را وارد کنید" 
                     {...field} 
                     disabled={isLoading}
+                    className="text-right placeholder:text-right"
+                    dir="rtl"
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-right" />
               </FormItem>
             )}
           />
@@ -121,16 +123,18 @@ export function LoginForm({ role }: LoginFormProps) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ایمیل</FormLabel>
+                <FormLabel className="text-right block">ایمیل</FormLabel>
                 <FormControl>
                   <Input 
                     type="email" 
                     placeholder="ایمیل خود را وارد کنید" 
                     {...field} 
                     disabled={isLoading}
+                    className="text-right placeholder:text-right"
+                    dir="rtl"
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-right" />
               </FormItem>
             )}
           />
@@ -141,16 +145,18 @@ export function LoginForm({ role }: LoginFormProps) {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isStudent ? 'شماره موبایل' : 'رمز عبور'}</FormLabel>
+              <FormLabel className="text-right block">{isStudent ? 'شماره موبایل' : 'رمز عبور'}</FormLabel>
               <FormControl>
                 <Input 
                   type={isStudent ? "text" : "password"} 
                   placeholder={isStudent ? "شماره موبایل خود را وارد کنید" : "رمز عبور خود را وارد کنید"} 
                   {...field} 
                   disabled={isLoading}
+                  className="text-right placeholder:text-right"
+                  dir="rtl"
                 />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-right" />
             </FormItem>
           )}
         />

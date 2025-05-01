@@ -21,13 +21,15 @@ export function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <div className="flex">
         <Sidebar role={requiredRole} isOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
         <div className="flex-1 transition-all duration-300">
           <Navbar role={requiredRole} onMenuClick={() => setIsSidebarOpen(true)} />
           <main className="p-4 md:p-8 min-h-screen">
-            {children}
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>
