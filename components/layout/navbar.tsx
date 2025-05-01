@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@prisma/client';
 import { signOut } from 'next-auth/react';
+import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 
 interface NavbarProps {
   role: UserRole;
@@ -14,7 +14,6 @@ interface NavbarProps {
 
 export function Navbar({ role, onMenuClick }: NavbarProps) {
   const pathname = usePathname();
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const getPageTitle = () => {
     const path = pathname.split('/').pop();
@@ -58,17 +57,7 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9"
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                3
-              </span>
-            </Button>
+            <NotificationDropdown role={role} />
 
             <Button
               variant="ghost"
