@@ -5,7 +5,8 @@ import { getServerSession } from 'next-auth';
 import { UserRole } from '@prisma/client';
 import { useState } from 'react';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { Sidebar } from './sidebar';
 import { Navbar } from './navbar';
 

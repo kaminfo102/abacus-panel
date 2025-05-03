@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { StudentForm } from '@/components/student/student-form';
 

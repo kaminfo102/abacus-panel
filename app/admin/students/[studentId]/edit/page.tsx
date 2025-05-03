@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect, notFound } from 'next/navigation';
 import { db } from '@/lib/prisma';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { StudentForm } from '@/components/student/student-form';
 
