@@ -76,51 +76,63 @@ export function NotificationDropdown({ role }: NotificationDropdownProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9"
+          className="relative h-9 w-9 hover:bg-primary/10 transition-colors"
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5 text-primary" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white shadow-sm animate-pulse">
               {unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between border-b p-4">
-          <h4 className="font-semibold">اعلان‌ها</h4>
+      <PopoverContent className="w-80 p-0 shadow-lg border-primary/20" align="end">
+        <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-primary/5 to-transparent">
+          <h4 className="font-bold text-lg text-primary">اعلان‌ها</h4>
           {unreadCount > 0 && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-primary">
               {unreadCount} اعلان جدید
             </span>
           )}
         </div>
         <ScrollArea className="h-[300px]">
           {notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              اعلان جدیدی وجود ندارد
+            <div className="p-8 text-center">
+              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">
+                اعلان جدیدی وجود ندارد
+              </p>
             </div>
           ) : (
-            <div className="grid gap-1 p-2">
+            <div className="grid gap-2 p-3">
               {notifications.map((notification) => (
                 <button
                   key={notification.id}
                   className={cn(
-                    "flex flex-col items-start gap-2 rounded-lg p-3 text-right transition-colors hover:bg-accent",
-                    !notification.isRead && "bg-accent/50"
+                    "flex flex-col items-start gap-2 rounded-lg p-4 text-right transition-all duration-200",
+                    "hover:bg-primary/5 hover:shadow-sm border border-transparent",
+                    !notification.isRead && "bg-primary/5 border-primary/10"
                   )}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{notification.title}</span>
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="font-extrabold text-right text-blue-600 text-lg">{notification.title}</span>
                     {!notification.isRead && (
-                      <span className="h-2 w-2 rounded-full bg-primary" />
+                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {notification.message}
+                  <p className="text-sm text-muted-foreground leading-relaxed text-right w-full">
+                    {notification.message.split('عنوان آزمون').map((part, index, array) => {
+                      if (index === array.length - 1) return part;
+                      return (
+                        <>
+                          {part}
+                          <span className="font-bold text-blue-600">عنوان آزمون</span>
+                        </>
+                      );
+                    })}
                   </p>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-primary/70 font-medium text-right w-full">
                     {new Date(notification.createdAt).toLocaleDateString('fa-IR')}
                   </span>
                 </button>

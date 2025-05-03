@@ -4,7 +4,10 @@ import { db } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, MessageSquare, User, AlertCircle } from 'lucide-react';
+import { CalendarIcon, MessageSquare, User, AlertCircle, Clock, Calculator, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
@@ -27,15 +30,72 @@ export default async function StudentDashboard() {
     }
   });
 
+  const latestExam = await db.exam.findFirst({
+    where: {
+      term: student.term,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
   return (
     <DashboardLayout requiredRole="STUDENT">
       <div className="page-transition space-y-8">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 shadow-lg">
-          <h1 className="text-4xl font-bold tracking-tight text-white mb-2">داشبورد دانش‌آموز</h1>
-          <p className="text-blue-100 text-lg">
-            {`خوش آمدید ${student.firstName} ${student.lastName}`}
-          </p>
+        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 shadow-lg overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/default-profile.png')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
+          <div className="relative flex items-center gap-6">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
+              {student.profileImageUrl ? (
+                <Image 
+                  src={student.profileImageUrl ? student.profileImageUrl : '/default-profile.png'}
+                  alt={`${student.firstName} ${student.lastName}`}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                  <User className="w-12 h-12 text-white/80" />
+                </div>
+              )}
+            </div>
+            <div>
+              {/* <h1 className="text-4xl font-bold tracking-tight text-white mb-2">داشبورد دانش‌آموز</h1> */}
+              <p className="font-bold tracking-tight text-white text-lg">
+                {`خوش آمدید ${student.firstName} ${student.lastName}`}
+              </p>
+            </div>
+          </div>
         </div>
+
+        {latestExam && (
+          <Card className="animate-pulse border-2 border-red-500 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-lg font-bold text-red-600 dark:text-red-400">آزمون جدید</CardTitle>
+              <Calculator className="h-6 w-6 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">{latestExam.title}</div>
+              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>زمان: {latestExam.timeLimit} ثانیه</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calculator className="h-4 w-4" />
+                  <span>تعداد ارقام: {latestExam.digitCount}</span>
+                </div>
+              </div>
+              <Link href={`/student/exams/${latestExam.id}`} className="block">
+                <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Play className="h-5 w-5 ml-2" />
+                  شروع آزمون
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="animate-fade-in hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
