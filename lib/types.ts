@@ -31,13 +31,7 @@ export interface ExamResult {
     updatedAt: string;
   }
   
-  /*export interface ExamResult {
-    correctAnswers: number;
-    totalQuestions: number;
-    timeSpent: number;
-    percentage: number;
-  }*/
-  
+
   export interface NumberItem {
     value: number;
     operator: Operator;

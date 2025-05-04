@@ -10,6 +10,7 @@ const examResultSchema = z.object({
   studentId: z.string(),
   score: z.number().min(0).max(100),
   answers: z.string(),
+  timeSpent: z.number().optional(),
 });
 
 export async function POST(req: Request) {
@@ -29,15 +30,23 @@ export async function POST(req: Request) {
     }
 
     // Create exam result
+    const data: any = {
+      ...validatedData,
+      endTime: new Date(),
+    };
+    if (validatedData.timeSpent !== undefined) {
+      data.timeSpent = validatedData.timeSpent;
+    }
     const result = await db.examResult.create({
-      data: {
-        ...validatedData,
-        endTime: new Date(),
-      },
+      data,
     });
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint failed (already submitted)
+      return new NextResponse('نتیجه این آزمون قبلاً ثبت شده است.', { status: 409 });
+    }
     console.error('[EXAM_RESULTS_POST]', error);
     return new NextResponse('Internal error', { status: 500 });
   }

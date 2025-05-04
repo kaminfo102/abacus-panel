@@ -80,11 +80,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
 
       const formData = {
         ...values,
-        digitCount: settings.digitCount,
-        rowCount: settings.rowCount,
-        itemsPerRow: settings.itemsPerRow,
-        timeLimit: settings.timeLimit,
         operators: settings.operators.join(','),
+        timeLimit: values.timeLimit * 60,
       };
 
       const response = await fetch(url, {
@@ -276,17 +273,14 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       تعداد آیتم در هر ردیف
                     </FormLabel>
                     <FormControl>
-                    <NumberInput
-                                id="rowCount"
-                                value={settings.rowCount}
-                                onChange={(e) => updateSetting('rowCount', parseInt(e.toString()))}
-                                min={LIMITS.rowCount.min}
-                                max={LIMITS.rowCount.max}
-                                step={1}
-                                className="w-full min-w-[120px]"
-                                
-                            />
-                      {/* <Input type="number" min="1" placeholder="تعداد آیتم در هر ردیف" {...field} /> */}
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={LIMITS.itemsPerRow.min}
+                        max={LIMITS.itemsPerRow.max}
+                        step={1}
+                        className="w-full min-w-[120px]"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

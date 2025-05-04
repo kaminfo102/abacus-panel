@@ -10,8 +10,12 @@ import { Student, Exam } from '@prisma/client';
 import { CalculationsTable, Answer } from './CalculationsTable';
 import type { ExamRow } from '../../lib/types';
 
+interface ExamWithQuestionsJson extends Exam {
+  questionsJson?: string;
+}
+
 interface ExamTakingFormProps {
-  exam: Exam;
+  exam: ExamWithQuestionsJson;
   student: Student;
 }
 
@@ -27,32 +31,56 @@ function randomNDigitNumber(digitCount: number) {
 function generateExamRows(exam: Exam): ExamRow[] {
   const rows: ExamRow[] = [];
   const operators = exam.operators.split(',');
-  for (let i = 0; i < exam.rowCount; i++) {
+
+  // Generate questions (columns)
+  for (let questionIndex = 0; questionIndex < exam.rowCount; questionIndex++) {
     const items = [];
-    for (let j = 0; j < exam.itemsPerRow; j++) {
-      // Generate a random number with the correct digit count
+    
+    // Generate rows for each question
+    for (let rowIndex = 0; rowIndex < exam.itemsPerRow; rowIndex++) {
+      // Generate a random number with the specified digit count
       const value = randomNDigitNumber(exam.digitCount);
       // Operator is empty for the first item, random for the rest
-      const operator = j === 0 ? '' : operators[Math.floor(Math.random() * operators.length)];
+      const operator = rowIndex === 0 ? '' : operators[Math.floor(Math.random() * operators.length)];
       items.push({ value: value.toString(), operator });
     }
+    
     rows.push({ items });
   }
   return rows;
 }
 
 export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
+  // Debug: log questionsJson and parsed examRows
+  let parsedRows: ExamRow[] = [];
+  try {
+    parsedRows = exam.questionsJson ? JSON.parse(exam.questionsJson) : [];
+  } catch (e) {
+    console.error('Failed to parse questionsJson:', e, exam.questionsJson);
+    parsedRows = [];
+  }
+  console.log('questionsJson:', exam.questionsJson);
+  console.log('parsed examRows:', parsedRows);
+
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(exam.timeLimit);
-  const [examRows, setExamRows] = useState<ExamRow[]>([]);
+  const [examRows, setExamRows] = useState<ExamRow[]>(parsedRows);
   const [answers, setAnswers] = useState<{ [key: number]: Answer }>({});
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const [startTime] = useState(Date.now());
 
   useEffect(() => {
-    setExamRows(generateExamRows(exam));
-  }, [exam]);
+    try {
+      if (exam.questionsJson) {
+        setExamRows(JSON.parse(exam.questionsJson));
+      }
+    } catch (e) {
+      setExamRows([]);
+      console.error('Failed to parse questionsJson in useEffect:', e, exam.questionsJson);
+    }
+  }, [exam.questionsJson]);
 
   useEffect(() => {
     if (finished) return;
@@ -60,7 +88,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          handleFinishExam();
+          handleFinishExam(true);
           return 0;
         }
         return prev - 1;
@@ -73,7 +101,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     setAnswers(newAnswers);
   };
 
-  const handleFinishExam = async () => {
+  const handleFinishExam = async (autoFinish = false) => {
     if (isLoading || finished) return;
     setIsLoading(true);
     setFinished(true);
@@ -81,6 +109,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     // محاسبه تعداد پاسخ صحیح
     const totalCorrect = Object.values(answers).filter(a => a.isCorrect).length;
     const score = Math.round((totalCorrect / examRows.length) * 100);
+    const timeSpent = Math.round((Date.now() - startTime) / 1000); // seconds
     try {
       const response = await fetch('/api/exams/results', {
         method: 'POST',
@@ -90,12 +119,24 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           studentId: student.id,
           score,
           answers: JSON.stringify(answers),
+          timeSpent,
         }),
       });
+      if (response.status === 409) {
+        toast({
+          title: 'توجه',
+          description: 'شما قبلاً نتیجه این آزمون را ثبت کرده‌اید.',
+          variant: 'destructive',
+        });
+        router.push(`/student/exams/${exam.id}/result`);
+        return;
+      }
       if (!response.ok) throw new Error();
       toast({
-        title: 'آزمون با موفقیت ثبت شد',
-        description: `نمره شما: ${score}`,
+        title: autoFinish ? 'زمان آزمون به پایان رسید' : 'آزمون با موفقیت ثبت شد',
+        description: autoFinish
+          ? 'زمان شما به پایان رسید. نتیجه آزمون ثبت شد.'
+          : `نمره شما: ${score}`,
       });
       router.push(`/student/exams/${exam.id}/result`);
     } catch (error) {
@@ -109,6 +150,11 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     }
   };
 
+  // Fix for CalculationsTable onFinish prop
+  const handleTableFinish = (correctAnswers: number) => {
+    handleFinishExam(true);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -116,7 +162,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">زمان باقیمانده: {timeLeft} ثانیه</h2>
             <Button
-              onClick={handleFinishExam}
+              onClick={() => handleFinishExam(false)}
               disabled={isLoading || finished}
               className="flex items-center gap-2"
             >
@@ -126,7 +172,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           </div>
           <CalculationsTable
             examData={examRows}
-            onFinish={handleFinishExam}
+            onFinish={handleTableFinish}
             isDisabled={isLoading || finished || timeLeft === 0}
             onAnswersUpdate={handleAnswersUpdate}
           />

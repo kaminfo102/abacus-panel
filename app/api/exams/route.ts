@@ -15,6 +15,29 @@ const examSchema = z.object({
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
 });
 
+// Helper functions for generating exam questions
+function randomNDigitNumber(digitCount) {
+  if (digitCount === 1) return Math.floor(Math.random() * 9) + 1;
+  const min = Math.pow(10, digitCount - 1);
+  const max = Math.pow(10, digitCount) - 1;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateExamRows(exam) {
+  const rows = [];
+  const operators = exam.operators.split(',');
+  for (let questionIndex = 0; questionIndex < exam.rowCount; questionIndex++) {
+    const items = [];
+    for (let rowIndex = 0; rowIndex < exam.itemsPerRow; rowIndex++) {
+      const value = randomNDigitNumber(exam.digitCount);
+      const operator = rowIndex === 0 ? '' : operators[Math.floor(Math.random() * operators.length)];
+      items.push({ value: value.toString(), operator });
+    }
+    rows.push({ items });
+  }
+  return rows;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,9 +49,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = examSchema.parse(body);
 
+    // Generate questions and save in questionsJson
+    const questions = generateExamRows(validatedData);
+
     // Create exam
     const exam = await db.exam.create({
-      data: validatedData,
+      data: {
+        ...validatedData,
+        questionsJson: JSON.stringify(questions),
+      },
     });
 
     // Find all students in the same term

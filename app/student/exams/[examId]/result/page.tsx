@@ -51,9 +51,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
   }
 
   const answers = JSON.parse(result.answers);
-  const duration = result.endTime 
-    ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000)
-    : 0;
+  const timeSpent = result.timeSpent ?? (result.endTime && result.startTime ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000) : 0);
 
   return (
     <DashboardLayout requiredRole="STUDENT">
@@ -73,7 +71,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>زمان صرف شده: {duration} ثانیه</span>
+                <span>زمان صرف شده: {timeSpent} ثانیه</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
