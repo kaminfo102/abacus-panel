@@ -26,9 +26,9 @@ export function AbacusComponent({ onNumberChange }: AbacusProps) {
       const containerWidth = abacusContainerRef.current?.clientWidth || window.innerWidth;
       const isMobile = window.innerWidth < 768;
       const width = isMobile 
-        ? Math.min(containerWidth, 500)
-        : Math.min(Math.max(containerWidth, 300), 800);
-      const height = Math.max(Math.round(width * 0.65), 220);
+        ? Math.min(containerWidth - 32, 400)
+        : Math.min(Math.max(containerWidth - 64, 300), 800);
+      const height = Math.max(Math.round(width * 0.6), 200);
       return { width, height, isMobile };
     }
 
@@ -37,7 +37,7 @@ export function AbacusComponent({ onNumberChange }: AbacusProps) {
     canvas.height = height;
     canvas.style.width = `${width}px`;
     canvas.style.minWidth = `${width}px`;
-    canvas.style.maxWidth = 'unset';
+    canvas.style.maxWidth = isMobile ? '400px' : '800px';
     canvas.style.height = 'auto';
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
@@ -52,7 +52,7 @@ export function AbacusComponent({ onNumberChange }: AbacusProps) {
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
-        canvas.style.maxWidth = isMobile ? '500px' : '800px';
+        canvas.style.maxWidth = isMobile ? '400px' : '800px';
         
         if (abacusInstanceRef.current) {
           abacusInstanceRef.current.setCanvas(canvas);
@@ -127,28 +127,38 @@ export function AbacusComponent({ onNumberChange }: AbacusProps) {
   };
 
   return (
-    <Card className="p-0 mb-2 border-none shadow-none bg-transparent">
-      <h3 className="text-base font-semibold mb-1 mt-2 text-center">چرتکه</h3>
-      <div
-        ref={abacusContainerRef}
-        className="flex flex-col justify-center items-center w-full"
-        style={{ 
-          minHeight: '160px',
-          width: '100%',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          padding: 0,
-          margin: 0,
-          WebkitOverflowScrolling: 'touch',
-          maxWidth: '100vw',
-          boxSizing: 'border-box'
-        }}
-      ></div>
-      <div className="flex justify-center mt-1 mb-0 gap-2">
-        <Button onClick={handleReset} variant="outline" size="sm">پاک کردن</Button>
-      </div>
-      <div className="text-center mt-1 mb-2 text-sm">
-        <p>عدد فعلی: {currentNumber}</p>
+    <Card className="p-0 mb-1 border-none shadow-none bg-transparent">
+      <div className="flex flex-col items-center w-full">
+        <div className="w-full bg-primary/5 rounded-lg p-2 sm:p-3 mb-2">
+          <p className="text-center text-base sm:text-lg font-bold text-primary mt-1">
+            عدد فعلی: <span className="text-xl sm:text-2xl text-primary-foreground bg-primary px-2 sm:px-3 py-1 rounded-md inline-block min-w-[60px]">{currentNumber}</span>
+          </p>
+          <div className="flex justify-center mt-2 mb-1">
+            <Button 
+              onClick={handleReset} 
+              variant="outline" 
+              size="sm"
+              className="bg-white hover:bg-primary/10 text-primary border-primary/20 hover:border-primary/30 transition-colors duration-200 text-sm sm:text-base"
+            >
+              صفر کردن چرتکه
+            </Button>
+          </div>
+        </div>
+        <div
+          ref={abacusContainerRef}
+          className="flex flex-col justify-center items-center w-full px-4 sm:px-8"
+          style={{ 
+            minHeight: '120px',
+            width: '100%',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            padding: 0,
+            margin: 0,
+            WebkitOverflowScrolling: 'touch',
+            maxWidth: '100vw',
+            boxSizing: 'border-box'
+          }}
+        ></div>
       </div>
     </Card>
   );

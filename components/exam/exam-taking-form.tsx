@@ -71,6 +71,8 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const [startTime] = useState(Date.now());
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [isAutoFinished, setIsAutoFinished] = useState(false);
 
   useEffect(() => {
     try {
@@ -89,14 +91,17 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
+          setIsAutoFinished(true);
           handleFinishExam(true);
           return 0;
         }
         return prev - 1;
       });
+      // Update time spent every second
+      setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(timerRef.current!);
-  }, [finished]);
+  }, [finished, startTime]);
 
   const handleAnswersUpdate = (newAnswers: { [key: number]: Answer }) => {
     setAnswers(newAnswers);
@@ -107,10 +112,14 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     setIsLoading(true);
     setFinished(true);
     clearInterval(timerRef.current!);
+    
+    // Calculate final time spent in seconds
+    const finalTimeSpent = Math.floor((Date.now() - startTime) / 1000);
+    
     // محاسبه تعداد پاسخ صحیح
     const totalCorrect = Object.values(answers).filter(a => a.isCorrect).length;
     const score = Math.round((totalCorrect / examRows.length) * 100);
-    const timeSpent = Math.round((Date.now() - startTime) / 1000); // seconds
+
     try {
       const response = await fetch('/api/exams/results', {
         method: 'POST',
@@ -120,7 +129,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           studentId: student.id,
           score,
           answers: JSON.stringify(answers),
-          timeSpent,
+          timeSpent: finalTimeSpent,
         }),
       });
       if (response.status === 409) {
@@ -159,43 +168,31 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 items-center">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
-            {/* <h2 className="text-lg sm:text-xl font-semibold text-center sm:text-right">زمان باقیمانده: {timeLeft} ثانیه</h2> */}
-            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
-              <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
-              <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
-                زمان باقیمانده: {timeLeft} ثانیه
-              </h2>
+            <div className="flex justify-center w-full">
+              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
+                <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
+                  زمان باقیمانده: {timeLeft} ثانیه
+                </h2>
+              </div>
             </div>
-            {/* <Button
-              onClick={() => handleFinishExam(false)}
-              disabled={isLoading || finished}
-              className="w-full sm:w-auto flex items-center justify-center gap-2"
-            >
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              پایان آزمون
-            </Button> */}
           </div>
           <div className="space-y-4">
-            <AbacusComponent />
+            
             <CalculationsTable
               examData={examRows}
               onFinish={handleTableFinish}
               isDisabled={isLoading || finished || timeLeft === 0}
               onAnswersUpdate={handleAnswersUpdate}
+              examTitle={exam.title}
             />
           </div>
           <div className="mt-6 flex flex-col items-center gap-4">
-            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
-              <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
-              <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
-                زمان باقیمانده: {timeLeft} ثانیه
-              </h2>
-            </div>
             <Button
               onClick={() => handleFinishExam(false)}
-              disabled={isLoading || finished}
+              disabled={isLoading || finished || timeLeft === 0}
               className="w-full max-w-md h-12 text-lg font-semibold"
               size="lg"
             >
@@ -205,6 +202,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           </div>
         </CardContent>
       </Card>
+      <AbacusComponent />
     </div>
   );
 } 

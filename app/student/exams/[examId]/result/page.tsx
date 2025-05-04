@@ -71,7 +71,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>زمان صرف شده: {timeSpent} ثانیه</span>
+                <span>زمان صرف شده: {result.timeSpent} ثانیه</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />

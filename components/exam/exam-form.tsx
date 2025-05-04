@@ -39,7 +39,7 @@ const formSchema = z.object({
   digitCount: z.coerce.number().min(1, 'حداقل یک رقم باید وارد شود'),
   rowCount: z.coerce.number().min(1, 'حداقل یک ردیف باید وارد شود'),
   itemsPerRow: z.coerce.number().min(1, 'حداقل یک آیتم در هر ردیف باید وارد شود'),
-  timeLimit: z.coerce.number().min(30, 'حداقل زمان 30 ثانیه باید باشد'),
+  timeLimit: z.coerce.number().min(1, 'حداقل زمان 1 دقیقه باید باشد'),
   operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
 });
@@ -62,7 +62,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
       digitCount: 1,
       rowCount: 1,
       itemsPerRow: 1,
-      timeLimit: 30,
+      timeLimit: 1,
       operators: '+',
       term: '',
     },
@@ -157,7 +157,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
   const LIMITS = {
     digitCount: { min: 1, max: 5 },
     rowCount: { min: 5, max: 20 },
-    timeLimit: { min: 1, max: 60 },
+    timeLimit: { min: 1 },
     itemsPerRow: { min: 2, max: 10 }
   };
 
@@ -297,18 +297,22 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       محدودیت زمانی (دقیقه)
                     </FormLabel>
                     <FormControl>
-                    <NumberInput
-                                id="timeLimit"
-                                value={settings.timeLimit / 60}
-                                onChange={(e) => updateSetting('timeLimit', parseInt(e.toString()) * 60)}
-                                min={LIMITS.timeLimit.min}
-                                max={LIMITS.timeLimit.max}
-                                step={1}
-                                className="w-full min-w-[120px]"
-                                
-                            />
-                      
+                      <NumberInput
+                        id="timeLimit"
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseInt(e.toString());
+                          field.onChange(value);
+                          updateSetting('timeLimit', value * 60);
+                        }}
+                        min={LIMITS.timeLimit.min}
+                        step={1}
+                        className="w-full min-w-[120px]"
+                      />
                     </FormControl>
+                    <FormDescription>
+                      حداقل زمان: 1 دقیقه
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

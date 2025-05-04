@@ -253,9 +253,9 @@ export class Abacus {
     this.DISTANCE_RODS = availableWidth / (this.numberOfRods + 1);
     this.BEAD_WIDTH = this.DISTANCE_RODS * 0.9;
     this.BEAD_HEIGHT = this.BEAD_WIDTH * 0.55;
-    this.LEFT_MARGIN = 10;
-    this.TOP_MARGIN = 60;
-    this.NUMBER_HEIGHT = 20;
+    this.LEFT_MARGIN = 5;
+    this.TOP_MARGIN = 5;
+    this.NUMBER_HEIGHT = 10;
     this.FRAME_LINE_WIDTH = 10;
     this.HEAVEN = this.BEAD_HEIGHT * 2 + this.FRAME_LINE_WIDTH;
     this.EARTH = this.BEAD_HEIGHT * 5;
