@@ -252,7 +252,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <ListChecks className="h-4 w-4" />
-                      تعداد آیتم
+                      تعداد سوال
                     </FormLabel>
                     <FormControl>
                       <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
@@ -270,7 +270,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Grid className="h-4 w-4" />
-                      تعداد آیتم در هر ردیف
+                تعداد آیتم در هر سوال
                     </FormLabel>
                     <FormControl>
                       <NumberInput

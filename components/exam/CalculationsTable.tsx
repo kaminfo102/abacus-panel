@@ -177,7 +177,7 @@ export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpd
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-center mt-8">
+      {/* <div className="flex justify-center mt-8">
         <Button
           size="lg"
           className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg"
@@ -185,7 +185,7 @@ export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpd
         >
           پایان آزمون
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -16,14 +16,14 @@ const examSchema = z.object({
 });
 
 // Helper functions for generating exam questions
-function randomNDigitNumber(digitCount) {
+function randomNDigitNumber(digitCount: number): number {
   if (digitCount === 1) return Math.floor(Math.random() * 9) + 1;
   const min = Math.pow(10, digitCount - 1);
   const max = Math.pow(10, digitCount) - 1;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateExamRows(exam) {
+function generateExamRows(exam: { operators: string; rowCount: number; itemsPerRow: number; digitCount: number }) {
   const rows = [];
   const operators = exam.operators.split(',');
   for (let questionIndex = 0; questionIndex < exam.rowCount; questionIndex++) {

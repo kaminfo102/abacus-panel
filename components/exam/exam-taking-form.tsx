@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Clock } from 'lucide-react';
 import { Student, Exam } from '@prisma/client';
 import { CalculationsTable, Answer } from './CalculationsTable';
+import { AbacusComponent } from './Abacus';
 import type { ExamRow } from '../../lib/types';
 
 interface ExamWithQuestionsJson extends Exam {
-  questionsJson?: string;
+  questionsJson: string | null;
 }
 
 interface ExamTakingFormProps {
@@ -156,26 +157,52 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">زمان باقیمانده: {timeLeft} ثانیه</h2>
-            <Button
+        <CardContent className="pt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+            {/* <h2 className="text-lg sm:text-xl font-semibold text-center sm:text-right">زمان باقیمانده: {timeLeft} ثانیه</h2> */}
+            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
+              <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
+                زمان باقیمانده: {timeLeft} ثانیه
+              </h2>
+            </div>
+            {/* <Button
               onClick={() => handleFinishExam(false)}
               disabled={isLoading || finished}
-              className="flex items-center gap-2"
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               پایان آزمون
+            </Button> */}
+          </div>
+          <div className="space-y-4">
+            <AbacusComponent />
+            <CalculationsTable
+              examData={examRows}
+              onFinish={handleTableFinish}
+              isDisabled={isLoading || finished || timeLeft === 0}
+              onAnswersUpdate={handleAnswersUpdate}
+            />
+          </div>
+          <div className="mt-6 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
+              <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
+                زمان باقیمانده: {timeLeft} ثانیه
+              </h2>
+            </div>
+            <Button
+              onClick={() => handleFinishExam(false)}
+              disabled={isLoading || finished}
+              className="w-full max-w-md h-12 text-lg font-semibold"
+              size="lg"
+            >
+              {isLoading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
+              پایان آزمون
             </Button>
           </div>
-          <CalculationsTable
-            examData={examRows}
-            onFinish={handleTableFinish}
-            isDisabled={isLoading || finished || timeLeft === 0}
-            onAnswersUpdate={handleAnswersUpdate}
-          />
         </CardContent>
       </Card>
     </div>
