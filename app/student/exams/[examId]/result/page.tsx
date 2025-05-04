@@ -51,7 +51,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
   }
 
   const answers = JSON.parse(result.answers);
-  const timeSpent = result.timeSpent ?? (result.endTime && result.startTime ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000) : 0);
+  const timeSpent = result.endTime && result.startTime ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000) : 0;
 
   return (
     <DashboardLayout requiredRole="STUDENT">
