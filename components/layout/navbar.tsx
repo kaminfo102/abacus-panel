@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, User, LogOut, UserCircle } from 'lucide-react';
+import { Menu, User, LogOut, UserCircle, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@prisma/client';
 import { signOut } from 'next-auth/react';
@@ -46,6 +46,11 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
     }
   };
 
+  const handleDashboardClick = () => {
+    router.push(`${basePath}/dashboard`);
+    router.refresh();
+  };
+
   return (
     <nav className="sticky top-0 z-30 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-900/80 dark:border-gray-800 shadow-sm">
       <div className="container flex h-16 items-center">
@@ -61,13 +66,19 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {getPageTitle()}
-            </h1>
+          <div className="flex-1" />
+          <div className="flex items-center justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDashboardClick}
+              className="h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800"
+              title="داشبورد"
+            >
+              <Home className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </Button>
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex-1 flex items-center justify-end gap-3">
             <NotificationDropdown role={role} />
 
             <DropdownMenu>
