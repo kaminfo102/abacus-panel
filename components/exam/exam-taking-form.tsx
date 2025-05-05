@@ -120,6 +120,14 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     const totalCorrect = Object.values(answers).filter(a => a.isCorrect).length;
     const score = Math.round((totalCorrect / examRows.length) * 100);
 
+    // تبدیل پاسخ‌ها به فرمت صحیح با ایندکس‌های درست
+    const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
+      // تبدیل کلید به عدد و کم کردن 1 برای تطابق با ایندکس آرایه
+      const index = parseInt(key) - 1;
+      acc[index] = value;
+      return acc;
+    }, {} as { [key: number]: Answer });
+
     try {
       const response = await fetch('/api/exams/results', {
         method: 'POST',
@@ -128,7 +136,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           examId: exam.id,
           studentId: student.id,
           score,
-          answers: JSON.stringify(answers),
+          answers: JSON.stringify(formattedAnswers),
           timeSpent: finalTimeSpent,
         }),
       });

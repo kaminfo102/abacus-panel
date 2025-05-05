@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Clock, CheckCircle2, XCircle } from 'lucide-react';
+import React from 'react';
 
 interface ExamResultPageProps {
   params: {
@@ -51,6 +52,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
   }
 
   const answers = JSON.parse(result.answers);
+  const questions = exam.questionsJson ? JSON.parse(exam.questionsJson) : [];
   const timeSpent = result.endTime && result.startTime ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000) : 0;
 
   return (
@@ -85,23 +87,51 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
               <CardTitle>پاسخ‌های شما</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {Object.entries(answers).map(([rowIndex, answer]: [string, any]) => (
-                  <div key={rowIndex} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      پاسخ شما: {answer.value ?? 'پاسخ داده نشده'}
-                    </div>
-                    {answer.submitted !== undefined && (
-                      <div>
-                        {answer.isCorrect ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
+              <div className="grid gap-4">
+                {Object.entries(answers)
+                  .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                  .map(([rowIndex, answer]: [string, any], displayIndex: number) => {
+                    const questionIndex = parseInt(rowIndex);
+                    const question = questions[questionIndex];
+                    if (!question) return null;
+                    
+                    return (
+                      <div key={rowIndex} className="p-4 border rounded-lg space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>سوال {displayIndex + 1}:</span>
+                          <div className="flex items-center gap-1">
+                            {question.items.map((item: any, index: number) => (
+                              <React.Fragment key={index}>
+                                {index > 0 && (
+                                  <span className="mx-1 text-blue-600 dark:text-blue-400">
+                                    {item.operator}
+                                  </span>
+                                )}
+                                <span>{item.value}</span>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">پاسخ شما: </span>
+                            <span className={answer.isCorrect ? 'text-green-600' : 'text-red-600'}>
+                              {answer.value ?? 'پاسخ داده نشده'}
+                            </span>
+                          </div>
+                          {answer.submitted !== undefined && (
+                            <div>
+                              {answer.isCorrect ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-red-500" />
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
