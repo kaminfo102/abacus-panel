@@ -66,7 +66,7 @@ export default async function StudentExams() {
                   <CardHeader>
                     <CardTitle>{exam.title}</CardTitle>
                     <CardDescription>
-                      تعداد ارقام: {exam.digitCount}
+                      ترم: {exam.term}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -82,7 +82,7 @@ export default async function StudentExams() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Grid className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">تعداد ردیف: {exam.rowCount}</span>
+                          <span className="text-sm">تعداد سوال: {exam.rowCount}</span>
                         </div>
                         {hasTaken && result && (
                           <div className="flex items-center gap-2">
