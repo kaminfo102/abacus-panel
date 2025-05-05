@@ -109,11 +109,13 @@ export function StudentTable({ students }: StudentTableProps) {
     <div className="space-y-4">
       <div className="flex items-center">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          {/* <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" /> */}
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="جستجوی دانش‌آموز..."
-            className="w-full pr-8 text-right"
+            // className="w-full pr-8 text-right"
+            className="w-full pl-8 text-right"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

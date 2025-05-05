@@ -9,15 +9,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Pencil, MoreHorizontal, Trash2, Search, Clock, Calculator } from 'lucide-react';
+import { Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Exam {
   id: string;
@@ -49,12 +44,30 @@ interface ExamTableProps {
 export function ExamTable({ exams }: ExamTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
+  const itemsPerPage = 10;
 
-  const filteredExams = exams.filter((exam) => 
-    exam.title.includes(searchTerm) || 
-    exam.term.includes(searchTerm)
-  );
+  const filteredExams = exams
+    .filter((exam) => 
+      exam.title.includes(searchTerm) || 
+      exam.term.includes(searchTerm)
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.term.localeCompare(b.term);
+      }
+      return b.term.localeCompare(a.term);
+    });
+
+  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleSort = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
 
   const handleEdit = (examId: string) => {
     router.push(`/admin/exams/${examId}/edit`);
@@ -97,7 +110,7 @@ export function ExamTable({ exams }: ExamTableProps) {
           <Input
             type="search"
             placeholder="جستجوی آزمون..."
-            className="w-full pl-8"
+            className="w-full pl-8 text-right"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -108,79 +121,135 @@ export function ExamTable({ exams }: ExamTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>عنوان</TableHead>
-              <TableHead className="hidden md:table-cell">تعداد ارقام</TableHead>
-              <TableHead className="hidden md:table-cell">تعداد ردیف</TableHead>
-              <TableHead className="hidden md:table-cell">آیتم در ردیف</TableHead>
-              <TableHead>زمان (ثانیه)</TableHead>
-              <TableHead>عملگرها</TableHead>
-              <TableHead>ترم</TableHead>
-              <TableHead className="text-left">عملیات</TableHead>
+              <TableHead className="text-right w-[50px]">ردیف</TableHead>
+              <TableHead className="text-right">عنوان</TableHead>
+              <TableHead className="text-right hidden md:table-cell">تعداد ارقام</TableHead>
+              <TableHead className="text-right hidden md:table-cell">تعداد ردیف</TableHead>
+              <TableHead className="text-right hidden md:table-cell">آیتم در ردیف</TableHead>
+              <TableHead className="text-right">زمان (ثانیه)</TableHead>
+              <TableHead className="text-right">عملگرها</TableHead>
+              <TableHead className="text-right">
+                <Button
+                  variant="ghost"
+                  onClick={handleSort}
+                  className="flex items-center gap-1"
+                >
+                  ترم
+                  {sortOrder === 'asc' ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead className="text-right">عملیات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredExams.length === 0 ? (
+            {paginatedExams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">
+                <TableCell colSpan={9} className="text-center">
                   آزمونی یافت نشد
                 </TableCell>
               </TableRow>
             ) : (
-              filteredExams.map((exam) => (
+              paginatedExams.map((exam, index) => (
                 <TableRow key={exam.id}>
-                  <TableCell>{exam.title}</TableCell>
-                  <TableCell className="hidden md:table-cell">{exam.digitCount}</TableCell>
-                  <TableCell className="hidden md:table-cell">{exam.rowCount}</TableCell>
-                  <TableCell className="hidden md:table-cell">{exam.itemsPerRow}</TableCell>
-                  <TableCell>{exam.timeLimit}</TableCell>
-                  <TableCell>{exam.operators}</TableCell>
-                  <TableCell>{exam.term}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">منو</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(exam.id)}>
-                          <Pencil className="ml-2 h-4 w-4" />
-                          ویرایش
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setExamToDelete(exam.id)}
-                        >
-                          <Trash2 className="ml-2 h-4 w-4" />
-                          حذف
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <TableCell className="text-right font-medium">
+                    {startIndex + index + 1}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">{exam.title}</TableCell>
+                  <TableCell className="text-right hidden md:table-cell">{exam.digitCount}</TableCell>
+                  <TableCell className="text-right hidden md:table-cell">{exam.rowCount}</TableCell>
+                  <TableCell className="text-right hidden md:table-cell">{exam.itemsPerRow}</TableCell>
+                  <TableCell className="text-right">{exam.timeLimit}</TableCell>
+                  <TableCell className="text-right">{exam.operators}</TableCell>
+                  <TableCell className="text-right">{exam.term}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(exam.id)}
+                        className="hover:bg-primary/10"
+                      >
+                        <Pencil className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setExamToDelete(exam.id)}
+                        className="hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={9} className="text-right">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      قبلی
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      صفحه {currentPage} از {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      بعدی
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    تعداد کل: {filteredExams.length} آزمون
+                  </div>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableFooter>
         </Table>
       </div>
 
       <AlertDialog open={!!examToDelete} onOpenChange={(open) => !open && setExamToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>آیا از حذف این آزمون مطمئن هستید؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              این عمل غیرقابل بازگشت است. آزمون و تمامی اطلاعات مرتبط با آن حذف خواهد شد.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>انصراف</AlertDialogCancel>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <div className="rounded-full bg-destructive/10 p-3">
+              <Trash2 className="h-6 w-6 text-destructive animate-pulse" />
+            </div>
+            <AlertDialogHeader className="text-center w-full">
+              <AlertDialogTitle className="text-xl font-bold text-center">حذف آزمون</AlertDialogTitle>
+              <AlertDialogDescription className="text-right mt-2 text-muted-foreground">
+                آیا از حذف این آزمون مطمئن هستید؟
+                <br />
+                <span className="text-sm text-destructive mt-1 block">
+                  این عمل غیرقابل بازگشت است و تمامی اطلاعات مرتبط با آزمون حذف خواهد شد.
+                </span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="flex-row-reverse justify-center gap-4 px-6 py-4">
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors min-w-[120px] h-10 text-base"
               onClick={handleDelete}
             >
+              <Trash2 className="ml-2 h-5 w-5" />
               حذف
             </AlertDialogAction>
+            <AlertDialogCancel className="mt-0 min-w-[120px] h-10 text-base">انصراف</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
