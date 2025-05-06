@@ -5,11 +5,11 @@ const prisma = new PrismaClient()
 
 async function main() {
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 10)
+  const adminPassword = await bcrypt.hash('Kaminfo102*', 10)
   const admin = await prisma.user.create({
     data: {
-      name: 'مدیر سیستم',
-      email: 'admin@example.com',
+      name: 'کامیل میرزائی',
+      email: 'mirzae.uast@gmail.com',
       password: adminPassword,
       role: UserRole.ADMIN,
     },

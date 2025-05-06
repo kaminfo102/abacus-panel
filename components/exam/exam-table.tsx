@@ -105,7 +105,7 @@ export function ExamTable({ exams }: ExamTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center">
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -117,7 +117,7 @@ export function ExamTable({ exams }: ExamTableProps) {
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -126,8 +126,8 @@ export function ExamTable({ exams }: ExamTableProps) {
               <TableHead className="text-right hidden md:table-cell">تعداد ارقام</TableHead>
               <TableHead className="text-right hidden md:table-cell">تعداد ردیف</TableHead>
               <TableHead className="text-right hidden md:table-cell">آیتم در ردیف</TableHead>
-              <TableHead className="text-right">زمان (ثانیه)</TableHead>
-              <TableHead className="text-right">عملگرها</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">زمان (ثانیه)</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">عملگرها</TableHead>
               <TableHead className="text-right">
                 <Button
                   variant="ghost"
@@ -158,12 +158,20 @@ export function ExamTable({ exams }: ExamTableProps) {
                   <TableCell className="text-right font-medium">
                     {startIndex + index + 1}
                   </TableCell>
-                  <TableCell className="text-right font-medium">{exam.title}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    <div className="flex flex-col">
+                      <span>{exam.title}</span>
+                      <div className="text-xs text-muted-foreground md:hidden mt-1">
+                        <span className="ml-2">زمان: {exam.timeLimit} ثانیه</span>
+                        <span>عملگرها: {exam.operators}</span>
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right hidden md:table-cell">{exam.digitCount}</TableCell>
                   <TableCell className="text-right hidden md:table-cell">{exam.rowCount}</TableCell>
                   <TableCell className="text-right hidden md:table-cell">{exam.itemsPerRow}</TableCell>
-                  <TableCell className="text-right">{exam.timeLimit}</TableCell>
-                  <TableCell className="text-right">{exam.operators}</TableCell>
+                  <TableCell className="text-right hidden sm:table-cell">{exam.timeLimit}</TableCell>
+                  <TableCell className="text-right hidden sm:table-cell">{exam.operators}</TableCell>
                   <TableCell className="text-right">{exam.term}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -192,7 +200,7 @@ export function ExamTable({ exams }: ExamTableProps) {
           <TableFooter>
             <TableRow>
               <TableCell colSpan={9} className="text-right">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import { Sidebar } from './sidebar';
+// import { Sidebar } from './sidebar';
 import { Navbar } from './navbar';
 
 interface DashboardLayoutProps {
@@ -19,16 +19,18 @@ export function DashboardLayout({
   children, 
   requiredRole 
 }: DashboardLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
   const isExamPage = pathname.startsWith('/student/exams/') && !pathname.includes('/result');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <div className="flex">
+        {/* Sidebar is disabled
         {!isExamPage && <Sidebar role={requiredRole} isOpen={isSidebarOpen} onOpenChange={setIsSidebarOpen} />}
-        <div className={`flex-1 transition-all duration-300 ${isExamPage ? 'w-full' : ''}`}>
-          {!isExamPage && <Navbar role={requiredRole} onMenuClick={() => setIsSidebarOpen(true)} />}
+        */}
+        <div className="flex-1 transition-all duration-300">
+          {!isExamPage && <Navbar role={requiredRole} onMenuClick={() => {}} />}
           <main className={`${isExamPage ? 'p-2' : 'p-4 md:p-8'} min-h-screen`}>
             <div className={`${isExamPage ? 'w-full' : 'max-w-7xl'} mx-auto`}>
               {children}
