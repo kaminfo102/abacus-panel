@@ -55,10 +55,10 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   // Debug: log questionsJson and parsed examRows
   let parsedRows: ExamRow[] = [];
   try {
-    parsedRows = exam.questionsJson ? JSON.parse(exam.questionsJson) : [];
+    parsedRows = exam.questionsJson ? JSON.parse(exam.questionsJson) : generateExamRows(exam);
   } catch (e) {
     console.error('Failed to parse questionsJson:', e, exam.questionsJson);
-    parsedRows = [];
+    parsedRows = generateExamRows(exam);
   }
   console.log('questionsJson:', exam.questionsJson);
   console.log('parsed examRows:', parsedRows);
@@ -78,12 +78,14 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     try {
       if (exam.questionsJson) {
         setExamRows(JSON.parse(exam.questionsJson));
+      } else {
+        setExamRows(generateExamRows(exam));
       }
     } catch (e) {
-      setExamRows([]);
+      setExamRows(generateExamRows(exam));
       console.error('Failed to parse questionsJson in useEffect:', e, exam.questionsJson);
     }
-  }, [exam.questionsJson]);
+  }, [exam.questionsJson, exam]);
 
   useEffect(() => {
     if (finished) return;

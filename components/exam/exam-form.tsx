@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -33,6 +33,14 @@ import type { ExamSettings, Operator } from "@/types/exam";
 import { CheckboxM } from '../ui/checkboxM';
 import { Label } from '../ui/label';
 import { OPERATOR_LABELS } from '@/types/constants';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const formSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -42,6 +50,9 @@ const formSchema = z.object({
   timeLimit: z.coerce.number().min(1, 'حداقل زمان 1 دقیقه باید باشد'),
   operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
+  creationMode: z.enum(['automatic', 'manual'], {
+    required_error: 'لطفا نحوه ایجاد آزمون را انتخاب کنید',
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,6 +63,8 @@ interface ExamFormProps {
 
 export function ExamForm({ initialData }: ExamFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualQuestions, setManualQuestions] = useState<ExamRow[]>([]);
   const router = useRouter();
   const isEditing = !!initialData;
 
@@ -65,10 +78,16 @@ export function ExamForm({ initialData }: ExamFormProps) {
       timeLimit: 1,
       operators: '+',
       term: '',
+      creationMode: 'automatic',
     },
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (values.creationMode === 'manual' && manualQuestions.length === 0) {
+      setShowManualInput(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -82,6 +101,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
         ...values,
         operators: settings.operators.join(','),
         timeLimit: values.timeLimit * 60,
+        questionsJson: values.creationMode === 'manual' ? JSON.stringify(manualQuestions) : null,
       };
 
       const response = await fetch(url, {
@@ -141,11 +161,12 @@ export function ExamForm({ initialData }: ExamFormProps) {
   };
 
   const toggleOperator = (operator: Operator) => {
-    setSettings(prev => ({...prev,
-        operators: prev.operators.includes(operator)
-        ? prev.operators.filter(op => op !== operator)
-        : [...prev.operators, operator]
-        }));
+    const newOperators = settings.operators.includes(operator)
+      ? settings.operators.filter(op => op !== operator)
+      : [...settings.operators, operator];
+    
+    setSettings(prev => ({...prev, operators: newOperators}));
+    form.setValue('operators', newOperators.join(','));
   };
 
   const [settings, setSettings] = useState<ExamSettings>(DEFAULT_SETTINGS);
@@ -159,6 +180,226 @@ export function ExamForm({ initialData }: ExamFormProps) {
     rowCount: { min: 5, max: 20 },
     timeLimit: { min: 1 },
     itemsPerRow: { min: 2, max: 10 }
+  };
+
+  const ManualQuestionInput = () => {
+    const values = form.getValues();
+    const [currentItems, setCurrentItems] = useState<{ value: string; operator: string }[]>([]);
+    const [currentOperator, setCurrentOperator] = useState('');
+    const [error, setError] = useState('');
+    const [currentNumber, setCurrentNumber] = useState('');
+
+    useEffect(() => {
+      setCurrentItems([]);
+      setCurrentOperator('');
+      setError('');
+      setCurrentNumber('');
+    }, [values.itemsPerRow, values.digitCount, showManualInput]);
+
+    const handleAddNumber = (value: string) => {
+      // Remove leading zeros
+      value = value.replace(/^0+/, '');
+      
+      if (value.length === 0) {
+        setError('لطفا یک عدد وارد کنید.');
+        return;
+      }
+
+      // Validate digit count
+      if (value.length > values.digitCount) {
+        setError(`تعداد ارقام باید حداکثر ${values.digitCount} باشد.`);
+        return;
+      }
+
+      // Validate item count
+      if (currentItems.length >= values.itemsPerRow) {
+        setError(`تعداد آیتم‌ها نمی‌تواند بیشتر از ${values.itemsPerRow} باشد.`);
+        return;
+      }
+
+      // Validate operator requirement
+      if (currentItems.length > 0 && !currentOperator) {
+        setError('ابتدا عملگر را انتخاب کنید.');
+        return;
+      }
+
+      setError('');
+      setCurrentItems((prev) => [
+        ...prev,
+        { value, operator: prev.length === 0 ? '' : currentOperator }
+      ]);
+      setCurrentOperator('');
+      setCurrentNumber('');
+    };
+
+    const handleOperatorChange = (op: string) => {
+      if (currentItems.length >= values.itemsPerRow - 1) {
+        setError('تعداد آیتم‌ها کامل است.');
+        return;
+      }
+      if (currentItems.length === 0) {
+        setError('ابتدا باید یک عدد وارد کنید.');
+        return;
+      }
+      setCurrentOperator(op);
+      setError('');
+    };
+
+    const handleRemoveLast = () => {
+      setCurrentItems((prev) => prev.slice(0, -1));
+      setCurrentOperator('');
+      setError('');
+    };
+
+    const handleAddQuestion = () => {
+      if (currentItems.length !== values.itemsPerRow) {
+        setError(`تعداد آیتم‌ها باید دقیقاً ${values.itemsPerRow} باشد.`);
+        return;
+      }
+      if (manualQuestions.length >= values.rowCount) {
+        setError(`تعداد سوالات نمی‌تواند بیشتر از ${values.rowCount} باشد.`);
+        return;
+      }
+      setManualQuestions([...manualQuestions, { items: currentItems }]);
+      setCurrentItems([]);
+      setCurrentOperator('');
+      setError('');
+      setCurrentNumber('');
+    };
+
+    const handleSaveQuestions = () => {
+      if (manualQuestions.length !== values.rowCount) {
+        setError(`لطفا دقیقاً ${values.rowCount} سوال را وارد کنید.`);
+        return;
+      }
+      setShowManualInput(false);
+    };
+
+    const operatorOptions = settings.operators;
+
+    return (
+      <Dialog open={showManualInput} onOpenChange={setShowManualInput}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>ورود سوالات به صورت دستی</DialogTitle>
+            <DialogDescription>
+              لطفا {values.rowCount} سوال را با {values.itemsPerRow} عدد و عملگر وارد کنید.
+              <br />
+              <span className="text-sm text-muted-foreground">
+                تعداد ارقام مجاز: {values.digitCount}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-medium">
+                سوال فعلی ({manualQuestions.length + 1}/{values.rowCount})
+                <span className="text-sm text-muted-foreground mr-2">
+                  - آیتم‌ها: {currentItems.length}/{values.itemsPerRow}
+                </span>
+              </h3>
+              <div className="flex flex-wrap gap-2 items-center">
+                {currentItems.map((item, idx) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    <span className="px-2 py-1 bg-slate-100 rounded text-base font-mono">{item.value}</span>
+                    {idx < values.itemsPerRow - 1 && idx !== values.itemsPerRow - 1 && (
+                      <span className="px-1 text-lg font-bold">{item.operator}</span>
+                    )}
+                  </span>
+                ))}
+                {currentItems.length < values.itemsPerRow && (
+                  <>
+                    {currentItems.length > 0 && (
+                      <select
+                        className="border rounded px-2 py-1 mx-1"
+                        value={currentOperator}
+                        onChange={(e) => handleOperatorChange(e.target.value)}
+                      >
+                        <option value="">انتخاب عملگر</option>
+                        {operatorOptions.map((op) => (
+                          <option key={op} value={op}>{OPERATOR_LABELS[op] || op}</option>
+                        ))}
+                      </select>
+                    )}
+                    <Input
+                      type="number"
+                      placeholder="عدد را وارد کنید"
+                      maxLength={values.digitCount}
+                      className="w-24"
+                      value={currentNumber}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val.length <= values.digitCount) {
+                          setCurrentNumber(val);
+                          setError('');
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddNumber(currentNumber);
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleAddNumber(currentNumber)}
+                      disabled={!currentNumber || (currentItems.length > 0 && !currentOperator)}
+                    >
+                      افزودن عدد
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleRemoveLast} 
+                      disabled={currentItems.length === 0}
+                    >
+                      حذف آخرین
+                    </Button>
+                  </>
+                )}
+              </div>
+              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+              <Button 
+                type="button" 
+                onClick={handleAddQuestion} 
+                disabled={currentItems.length !== values.itemsPerRow || manualQuestions.length >= values.rowCount} 
+                className="mt-2"
+              >
+                افزودن سوال
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">سوالات وارد شده ({manualQuestions.length}/{values.rowCount})</h3>
+              {manualQuestions.map((question, index) => (
+                <div key={index} className="p-2 bg-muted rounded-md">
+                  {question.items.map((item, itemIndex) => (
+                    <span key={itemIndex}>
+                      {item.value}
+                      {itemIndex < question.items.length - 1 && ` ${item.operator} `}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowManualInput(false)}>
+              انصراف
+            </Button>
+            <Button 
+              onClick={handleSaveQuestions}
+              disabled={manualQuestions.length !== values.rowCount}
+            >
+              ذخیره سوالات
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   return (
@@ -357,6 +598,31 @@ export function ExamForm({ initialData }: ExamFormProps) {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="creationMode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نحوه ایجاد آزمون</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="نحوه ایجاد آزمون را انتخاب کنید" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="automatic">اتوماتیک</SelectItem>
+                        <SelectItem value="manual">دستی</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      در حالت اتوماتیک، سوالات به صورت تصادفی ایجاد می‌شوند. در حالت دستی، شما باید سوالات را خودتان وارد کنید.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               
             </div>
             
@@ -385,6 +651,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
           </form>
         </Form>
       </CardContent>
+      <ManualQuestionInput />
     </Card>
   );
 }

@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { z } from 'zod';
-
-import { db } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
+import { db } from '@/lib/prisma';
+import { z } from 'zod';
 
 const examSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -13,6 +12,8 @@ const examSchema = z.object({
   timeLimit: z.number().min(30, 'حداقل زمان 30 ثانیه باید باشد'),
   operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
+  creationMode: z.enum(['automatic', 'manual']),
+  questionsJson: z.string().nullable(),
 });
 
 // Helper functions for generating exam questions
@@ -95,16 +96,23 @@ export async function PATCH(
     const body = await req.json();
     const validatedData = examSchema.parse(body);
 
-    // Regenerate questions if settings are changed
-    const questions = generateExamRows(validatedData);
+    // Generate questions if in automatic mode
+    const questions = validatedData.creationMode === 'automatic' 
+      ? generateExamRows(validatedData)
+      : validatedData.questionsJson 
+        ? JSON.parse(validatedData.questionsJson)
+        : null;
 
+    // Update exam without creationMode field
+    const { creationMode, ...examData } = validatedData;
     const exam = await db.exam.update({
       where: {
         id: params.examId,
       },
       data: {
-        ...validatedData,
-        questionsJson: JSON.stringify(questions),
+        ...examData,
+        questionsJson: questions ? JSON.stringify(questions) : null,
+        isManual: creationMode === 'manual',
       },
     });
 

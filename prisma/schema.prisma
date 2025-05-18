@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = "postgresql://postgres:l1UuuOcSCuklxKqe@services.gen7.chabokan.net:12834/michael"
-  
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -65,6 +64,7 @@ model Exam {
   operators    String   // e.g. "+,-,*"
   term         String   // student term
   questionsJson String?
+  isManual     Boolean   @default(false)
   students     Student[] @relation("StudentExams")
   results      ExamResult[]
   createdAt    DateTime @default(now())
