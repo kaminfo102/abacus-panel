@@ -299,37 +299,28 @@ export function ExamForm({ initialData }: ExamFormProps) {
                             key={rowIndex}
                             className="text-center border-x border-gray-300"
                           >
-                            <div className="flex flex-col items-center gap-1">
-                              {itemIndex === 0 ? (
-                                <Input
-                                  type="number"
-                                  value={row.items[itemIndex].value}
-                                  onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
-                                  className="w-20 text-center font-mono"
-                                  maxLength={values.digitCount}
-                                  placeholder="عدد"
-                                />
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <select
-                                    className="border rounded px-1 py-0.5 bg-white font-mono w-20 text-center"
-                                    value={row.items[itemIndex - 1].operator}
-                                    onChange={(e) => handleOperatorChange(rowIndex, itemIndex - 1, e.target.value)}
-                                  >
-                                    <option value="">انتخاب</option>
-                                    {operatorOptions.map((op) => (
-                                      <option key={op} value={op}>{OPERATOR_LABELS[op] || op}</option>
-                                    ))}
-                                  </select>
-                                  <Input
-                                    type="number"
-                                    value={row.items[itemIndex].value}
-                                    onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
-                                    className="w-20 text-center font-mono"
-                                    maxLength={values.digitCount}
-                                    placeholder="عدد"
-                                  />
-                                </div>
+                            <div className="flex flex-col items-center gap-2">
+                              <Input
+                                type="number"
+                                value={row.items[itemIndex].value}
+                                onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
+                                className="w-24 text-center font-mono text-lg"
+                                maxLength={values.digitCount}
+                                placeholder="عدد"
+                              />
+                              {itemIndex < values.itemsPerRow - 1 && (
+                                <select
+                                  className="w-24 border rounded px-2 py-1.5 bg-white font-mono text-center text-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                  value={row.items[itemIndex].operator}
+                                  onChange={(e) => handleOperatorChange(rowIndex, itemIndex, e.target.value)}
+                                >
+                                  <option value="">انتخاب عملگر</option>
+                                  {operatorOptions.map((op) => (
+                                    <option key={op} value={op} className="text-lg">
+                                      {OPERATOR_LABELS[op] || op}
+                                    </option>
+                                  ))}
+                                </select>
                               )}
                             </div>
                           </TableCell>
