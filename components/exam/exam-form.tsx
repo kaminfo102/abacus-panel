@@ -41,6 +41,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+  TableHead,
+} from '@/components/ui/table';
 
 const formSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -102,6 +110,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
         operators: settings.operators.join(','),
         timeLimit: values.timeLimit * 60,
         questionsJson: values.creationMode === 'manual' ? JSON.stringify(manualQuestions) : null,
+        isManual: values.creationMode === 'manual',
       };
 
       const response = await fetch(url, {
@@ -113,7 +122,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error();
+        const error = await response.text();
+        throw new Error(error);
       }
 
       toast({
@@ -126,6 +136,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
       router.push('/admin/exams');
       router.refresh();
     } catch (error) {
+      console.error('Error creating exam:', error);
       toast({
         title: 'خطا',
         description: isEditing 
@@ -184,474 +195,429 @@ export function ExamForm({ initialData }: ExamFormProps) {
 
   const ManualQuestionInput = () => {
     const values = form.getValues();
-    const [currentItems, setCurrentItems] = useState<{ value: string; operator: string }[]>([]);
-    const [currentOperator, setCurrentOperator] = useState('');
+    const [questions, setQuestions] = useState<ExamRow[]>([]);
     const [error, setError] = useState('');
-    const [currentNumber, setCurrentNumber] = useState('');
 
     useEffect(() => {
-      setCurrentItems([]);
-      setCurrentOperator('');
+      // Initialize empty questions array
+      const initialQuestions: ExamRow[] = Array(values.rowCount).fill(null).map(() => ({
+        items: Array(values.itemsPerRow).fill(null).map(() => ({ value: '', operator: '' }))
+      }));
+      setQuestions(initialQuestions);
       setError('');
-      setCurrentNumber('');
-    }, [values.itemsPerRow, values.digitCount, showManualInput]);
+    }, [values.rowCount, values.itemsPerRow]);
 
-    const handleAddNumber = (value: string) => {
+    const handleValueChange = (rowIndex: number, colIndex: number, value: string) => {
       // Remove leading zeros
       value = value.replace(/^0+/, '');
       
-      if (value.length === 0) {
-        setError('لطفا یک عدد وارد کنید.');
-        return;
-      }
-
-      // Validate digit count
       if (value.length > values.digitCount) {
         setError(`تعداد ارقام باید حداکثر ${values.digitCount} باشد.`);
         return;
       }
-
-      // Validate item count
-      if (currentItems.length >= values.itemsPerRow) {
-        setError(`تعداد آیتم‌ها نمی‌تواند بیشتر از ${values.itemsPerRow} باشد.`);
-        return;
-      }
-
-      // Validate operator requirement
-      if (currentItems.length > 0 && !currentOperator) {
-        setError('ابتدا عملگر را انتخاب کنید.');
-        return;
-      }
-
       setError('');
-      setCurrentItems((prev) => [
-        ...prev,
-        { value, operator: prev.length === 0 ? '' : currentOperator }
-      ]);
-      setCurrentOperator('');
-      setCurrentNumber('');
+      const newQuestions = [...questions];
+      newQuestions[rowIndex].items[colIndex].value = value;
+      setQuestions(newQuestions);
     };
 
-    const handleOperatorChange = (op: string) => {
-      if (currentItems.length >= values.itemsPerRow - 1) {
-        setError('تعداد آیتم‌ها کامل است.');
-        return;
-      }
-      if (currentItems.length === 0) {
-        setError('ابتدا باید یک عدد وارد کنید.');
-        return;
-      }
-      setCurrentOperator(op);
+    const handleOperatorChange = (rowIndex: number, colIndex: number, operator: string) => {
       setError('');
-    };
-
-    const handleRemoveLast = () => {
-      setCurrentItems((prev) => prev.slice(0, -1));
-      setCurrentOperator('');
-      setError('');
-    };
-
-    const handleAddQuestion = () => {
-      if (currentItems.length !== values.itemsPerRow) {
-        setError(`تعداد آیتم‌ها باید دقیقاً ${values.itemsPerRow} باشد.`);
-        return;
-      }
-      if (manualQuestions.length >= values.rowCount) {
-        setError(`تعداد سوالات نمی‌تواند بیشتر از ${values.rowCount} باشد.`);
-        return;
-      }
-      setManualQuestions([...manualQuestions, { items: currentItems }]);
-      setCurrentItems([]);
-      setCurrentOperator('');
-      setError('');
-      setCurrentNumber('');
+      const newQuestions = [...questions];
+      newQuestions[rowIndex].items[colIndex].operator = operator;
+      setQuestions(newQuestions);
     };
 
     const handleSaveQuestions = () => {
-      if (manualQuestions.length !== values.rowCount) {
-        setError(`لطفا دقیقاً ${values.rowCount} سوال را وارد کنید.`);
-        return;
+      // Validate all questions
+      for (let i = 0; i < questions.length; i++) {
+        const row = questions[i];
+        for (let j = 0; j < row.items.length; j++) {
+          const item = row.items[j];
+          if (!item.value) {
+            setError(`لطفا تمام اعداد را در سوال ${i + 1} وارد کنید.`);
+            return;
+          }
+          if (j < row.items.length - 1 && !item.operator) {
+            setError(`لطفا عملگر بین اعداد در سوال ${i + 1} را وارد کنید.`);
+            return;
+          }
+        }
       }
+
+      // Ensure operators are in the correct positions
+      const validatedQuestions = questions.map(row => ({
+        items: row.items.map((item, index) => ({
+          value: item.value,
+          operator: index < row.items.length - 1 ? item.operator : ''
+        }))
+      }));
+
+      setManualQuestions(validatedQuestions);
       setShowManualInput(false);
+      toast({
+        title: 'سوالات ذخیره شدند',
+        description: 'سوالات با موفقیت ذخیره شدند. می‌توانید آزمون را ایجاد کنید.',
+      });
     };
 
     const operatorOptions = settings.operators;
 
     return (
-      <Dialog open={showManualInput} onOpenChange={setShowManualInput}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>ورود سوالات به صورت دستی</DialogTitle>
-            <DialogDescription>
-              لطفا {values.rowCount} سوال را با {values.itemsPerRow} عدد و عملگر وارد کنید.
-              <br />
-              <span className="text-sm text-muted-foreground">
-                تعداد ارقام مجاز: {values.digitCount}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="font-medium">
-                سوال فعلی ({manualQuestions.length + 1}/{values.rowCount})
-                <span className="text-sm text-muted-foreground mr-2">
-                  - آیتم‌ها: {currentItems.length}/{values.itemsPerRow}
+      <div className="container mx-auto py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold mb-2">ورود سوالات به صورت دستی</h1>
+              <p className="text-muted-foreground">
+                لطفا {values.rowCount} سوال را با {values.itemsPerRow} عدد و عملگر وارد کنید.
+                <br />
+                <span className="text-sm">
+                  تعداد ارقام مجاز: {values.digitCount}
                 </span>
-              </h3>
-              <div className="flex flex-wrap gap-2 items-center">
-                {currentItems.map((item, idx) => (
-                  <span key={idx} className="flex items-center gap-1">
-                    <span className="px-2 py-1 bg-slate-100 rounded text-base font-mono">{item.value}</span>
-                    {idx < values.itemsPerRow - 1 && idx !== values.itemsPerRow - 1 && (
-                      <span className="px-1 text-lg font-bold">{item.operator}</span>
-                    )}
-                  </span>
-                ))}
-                {currentItems.length < values.itemsPerRow && (
-                  <>
-                    {currentItems.length > 0 && (
-                      <select
-                        className="border rounded px-2 py-1 mx-1"
-                        value={currentOperator}
-                        onChange={(e) => handleOperatorChange(e.target.value)}
-                      >
-                        <option value="">انتخاب عملگر</option>
-                        {operatorOptions.map((op) => (
-                          <option key={op} value={op}>{OPERATOR_LABELS[op] || op}</option>
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <Table className="border border-gray-300">
+                  <TableHeader>
+                    <TableRow className="bg-primary/10 border-b border-gray-300">
+                      {Array(values.rowCount).fill(null).map((_, i) => (
+                        <TableHead key={i} className="text-center font-bold border-x border-gray-300">
+                          {values.rowCount - i}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-center font-bold border-l border-gray-300">شماره</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array(values.itemsPerRow).fill(null).map((_, itemIndex) => (
+                      <TableRow key={itemIndex} className="border-b border-gray-300">
+                        {questions.map((row, rowIndex) => (
+                          <TableCell
+                            key={rowIndex}
+                            className="text-center border-x border-gray-300"
+                          >
+                            <div className="flex flex-col items-center gap-1">
+                              {itemIndex === 0 ? (
+                                <Input
+                                  type="number"
+                                  value={row.items[itemIndex].value}
+                                  onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
+                                  className="w-20 text-center font-mono"
+                                  maxLength={values.digitCount}
+                                  placeholder="عدد"
+                                />
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <select
+                                    className="border rounded px-1 py-0.5 bg-white font-mono w-20 text-center"
+                                    value={row.items[itemIndex - 1].operator}
+                                    onChange={(e) => handleOperatorChange(rowIndex, itemIndex - 1, e.target.value)}
+                                  >
+                                    <option value="">انتخاب</option>
+                                    {operatorOptions.map((op) => (
+                                      <option key={op} value={op}>{OPERATOR_LABELS[op] || op}</option>
+                                    ))}
+                                  </select>
+                                  <Input
+                                    type="number"
+                                    value={row.items[itemIndex].value}
+                                    onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
+                                    className="w-20 text-center font-mono"
+                                    maxLength={values.digitCount}
+                                    placeholder="عدد"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                         ))}
-                      </select>
-                    )}
-                    <Input
-                      type="number"
-                      placeholder="عدد را وارد کنید"
-                      maxLength={values.digitCount}
-                      className="w-24"
-                      value={currentNumber}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.length <= values.digitCount) {
-                          setCurrentNumber(val);
-                          setError('');
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddNumber(currentNumber);
-                        }
-                      }}
-                    />
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleAddNumber(currentNumber)}
-                      disabled={!currentNumber || (currentItems.length > 0 && !currentOperator)}
-                    >
-                      افزودن عدد
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={handleRemoveLast} 
-                      disabled={currentItems.length === 0}
-                    >
-                      حذف آخرین
-                    </Button>
-                  </>
-                )}
+                        <TableCell className="text-center border-l border-gray-300 font-mono">
+                          {itemIndex + 1}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-              <Button 
-                type="button" 
-                onClick={handleAddQuestion} 
-                disabled={currentItems.length !== values.itemsPerRow || manualQuestions.length >= values.rowCount} 
-                className="mt-2"
-              >
-                افزودن سوال
+              {error && (
+                <div className="text-red-500 text-sm mt-2 bg-red-50 p-2 rounded-md border border-red-200">
+                  {error}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-4 mt-8">
+              <Button variant="outline" onClick={() => setShowManualInput(false)}>
+                انصراف
+              </Button>
+              <Button onClick={handleSaveQuestions}>
+                ذخیره سوالات
               </Button>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-medium">سوالات وارد شده ({manualQuestions.length}/{values.rowCount})</h3>
-              {manualQuestions.map((question, index) => (
-                <div key={index} className="p-2 bg-muted rounded-md">
-                  {question.items.map((item, itemIndex) => (
-                    <span key={itemIndex}>
-                      {item.value}
-                      {itemIndex < question.items.length - 1 && ` ${item.operator} `}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowManualInput(false)}>
-              انصراف
-            </Button>
-            <Button 
-              onClick={handleSaveQuestions}
-              disabled={manualQuestions.length !== values.rowCount}
-            >
-              ذخیره سوالات
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     );
   };
 
   return (
-    <Card className="p-8 max-w-4xl mx-auto">
-      {/* راهنمای تکمیل فرم */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
-          <h3 className="font-semibold text-blue-700 mb-3">راهنمای تکمیل فرم</h3>
-          <ul className="space-y-2 text-blue-600">
-            <GuideItem text="تعداد ارقام: تعیین کننده حداکثر رقم‌های اعداد در محاسبات" />
-            <GuideItem text="تعداد سوال: مشخص کننده تعداد کل سوالات آزمون" />
-            <GuideItem text="تعداد آیتم: تعداد اعداد در هر سطر برای محاسبه" />
-            <GuideItem text="مدت زمان: زمان کل آزمون به دقیقه" />
-          </ul>
-        </div>
-      <CardContent className="pt-3">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
-          <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Type className="h-4 w-4" />
-                      عنوان
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="عنوان آزمون را وارد کنید" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-
-                            <FormField
-                              control={form.control}
-                              name="term"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>ترم</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger className="text-right [&>span]:text-right">
-                                        <SelectValue placeholder="ترم را انتخاب کنید" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent className="text-right">
-                                      {STUDENT_TERMS.map((term) => (
-                                        <SelectItem key={term} value={term} className="text-right">
-                                          {term}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormDescription>
-                                    آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-          </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              
-
-              <FormField
-                control={form.control}
-                name="digitCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Hash className="h-4 w-4" />
-                      تعداد ارقام
-                    </FormLabel>
-                    <FormControl>
-                      <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
-                      
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="rowCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <ListChecks className="h-4 w-4" />
-                      تعداد سوال
-                    </FormLabel>
-                    <FormControl>
-                      <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
-                      
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="itemsPerRow"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Grid className="h-4 w-4" />
-                تعداد آیتم در هر سوال
-                    </FormLabel>
-                    <FormControl>
-                      <NumberInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        min={LIMITS.itemsPerRow.min}
-                        max={LIMITS.itemsPerRow.max}
-                        step={1}
-                        className="w-full min-w-[120px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="timeLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      محدودیت زمانی (دقیقه)
-                    </FormLabel>
-                    <FormControl>
-                      <NumberInput
-                        id="timeLimit"
-                        value={field.value}
-                        onChange={(e) => {
-                          const value = parseInt(e.toString());
-                          field.onChange(value);
-                          updateSetting('timeLimit', value * 60);
-                        }}
-                        min={LIMITS.timeLimit.min}
-                        step={1}
-                        className="w-full min-w-[120px]"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      حداقل زمان: 1 دقیقه
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="operators"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
-                      عملگرها
-                    </FormLabel>
-                    <FormControl>
-                       {/* بخش چک‌باکس‌ها */}
-                        <div className="bg-slate-50 p-6 rounded-xl">
-                            <h3 className="font-semibold text-lg text-slate-700 mb-4">عملگرهای مجاز</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                                {(['+', '-', '*', '/'] as Operator[]).map((op) => (
-                                    <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
-                                        <CheckboxM
-                                            id={`op-${op}`}
-                                            checked={settings.operators.includes(op)}
-                                            onCheckedChange={() => toggleOperator(op)}
-                                        />
-                                        <Label
-                                            htmlFor={`op-${op}`}
-                                            className="text-sm font-medium cursor-pointer"
-                                        >
-                                            {OPERATOR_LABELS[op]}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                      </div>
-                      
-                    </FormControl>
-                    
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="creationMode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نحوه ایجاد آزمون</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="نحوه ایجاد آزمون را انتخاب کنید" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="automatic">اتوماتیک</SelectItem>
-                        <SelectItem value="manual">دستی</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      در حالت اتوماتیک، سوالات به صورت تصادفی ایجاد می‌شوند. در حالت دستی، شما باید سوالات را خودتان وارد کنید.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              
+    <>
+      {showManualInput ? (
+        <ManualQuestionInput />
+      ) : (
+        <Card className="p-8 max-w-4xl mx-auto">
+          {/* راهنمای تکمیل فرم */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
+              <h3 className="font-semibold text-blue-700 mb-3">راهنمای تکمیل فرم</h3>
+              <ul className="space-y-2 text-blue-600">
+                <GuideItem text="تعداد ارقام: تعیین کننده حداکثر رقم‌های اعداد در محاسبات" />
+                <GuideItem text="تعداد سوال: مشخص کننده تعداد کل سوالات آزمون" />
+                <GuideItem text="تعداد آیتم: تعداد اعداد در هر سطر برای محاسبه" />
+                <GuideItem text="مدت زمان: زمان کل آزمون به دقیقه" />
+              </ul>
             </div>
-            
-            
-            
+          <CardContent className="pt-3">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
+              <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Type className="h-4 w-4" />
+                          عنوان
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="عنوان آزمون را وارد کنید" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <div className="flex justify-end gap-4 mt-8 w-full ">
-              <Button 
-                variant="outline" 
-                type="button" 
-                onClick={() => router.back()}
-                disabled={isLoading}
-                className="h-12 px-8 text-lg"
-              >
-                انصراف
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="h-12 px-8 text-lg"
-              >
-                {isLoading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
-                {isEditing ? 'بروزرسانی آزمون' : 'ایجاد آزمون'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-      <ManualQuestionInput />
-    </Card>
+
+                              <FormField
+                                control={form.control}
+                                name="term"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>ترم</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger className="text-right [&>span]:text-right">
+                                          <SelectValue placeholder="ترم را انتخاب کنید" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent className="text-right">
+                                        {STUDENT_TERMS.map((term) => (
+                                          <SelectItem key={term} value={term} className="text-right">
+                                            {term}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                      آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+              </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  
+
+                  <FormField
+                    control={form.control}
+                    name="digitCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Hash className="h-4 w-4" />
+                          تعداد ارقام
+                        </FormLabel>
+                        <FormControl>
+                          <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
+                          
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="rowCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <ListChecks className="h-4 w-4" />
+                          تعداد سوال
+                        </FormLabel>
+                        <FormControl>
+                          <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
+                          
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="itemsPerRow"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Grid className="h-4 w-4" />
+                    تعداد آیتم در هر سوال
+                        </FormLabel>
+                        <FormControl>
+                          <NumberInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            min={LIMITS.itemsPerRow.min}
+                            max={LIMITS.itemsPerRow.max}
+                            step={1}
+                            className="w-full min-w-[120px]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="timeLimit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          محدودیت زمانی (دقیقه)
+                        </FormLabel>
+                        <FormControl>
+                          <NumberInput
+                            id="timeLimit"
+                            value={field.value}
+                            onChange={(e) => {
+                              const value = parseInt(e.toString());
+                              field.onChange(value);
+                              updateSetting('timeLimit', value * 60);
+                            }}
+                            min={LIMITS.timeLimit.min}
+                            step={1}
+                            className="w-full min-w-[120px]"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          حداقل زمان: 1 دقیقه
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="operators"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Calculator className="h-4 w-4" />
+                          عملگرها
+                        </FormLabel>
+                        <FormControl>
+                           {/* بخش چک‌باکس‌ها */}
+                            <div className="bg-slate-50 p-6 rounded-xl">
+                                <h3 className="font-semibold text-lg text-slate-700 mb-4">عملگرهای مجاز</h3>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {(['+', '-', '*', '/'] as Operator[]).map((op) => (
+                                        <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
+                                            <CheckboxM
+                                                id={`op-${op}`}
+                                                checked={settings.operators.includes(op)}
+                                                onCheckedChange={() => toggleOperator(op)}
+                                            />
+                                            <Label
+                                                htmlFor={`op-${op}`}
+                                                className="text-sm font-medium cursor-pointer"
+                                            >
+                                                {OPERATOR_LABELS[op]}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                          </div>
+                          
+                        </FormControl>
+                        
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="creationMode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>نحوه ایجاد آزمون</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="نحوه ایجاد آزمون را انتخاب کنید" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="automatic">اتوماتیک</SelectItem>
+                            <SelectItem value="manual">دستی</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          در حالت اتوماتیک، سوالات به صورت تصادفی ایجاد می‌شوند. در حالت دستی، شما باید سوالات را خودتان وارد کنید.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  
+                </div>
+                
+                
+                
+
+                <div className="flex justify-end gap-4 mt-8 w-full ">
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={() => router.back()}
+                    disabled={isLoading}
+                    className="h-12 px-8 text-lg"
+                  >
+                    انصراف
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="h-12 px-8 text-lg"
+                  >
+                    {isLoading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+                    {isEditing ? 'بروزرسانی آزمون' : 'ایجاد آزمون'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }

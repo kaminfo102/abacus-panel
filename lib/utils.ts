@@ -15,7 +15,7 @@ export function calculateRowResult(items: { value: string; operator: string }[])
   if (!items.length) return '';
   let result = parseFloat(items[0].value);
   for (let i = 1; i < items.length; i++) {
-    const op = items[i].operator;
+    const op = items[i - 1].operator;
     const val = parseFloat(items[i].value);
     switch (op) {
       case '+': result += val; break;

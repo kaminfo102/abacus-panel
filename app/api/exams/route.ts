@@ -39,6 +39,31 @@ function generateExamRows(exam: { operators: string; rowCount: number; itemsPerR
   return rows;
 }
 
+// Add validation for manual questions
+const validateManualQuestions = (questions: any[], rowCount: number, itemsPerRow: number) => {
+  if (!Array.isArray(questions) || questions.length !== rowCount) {
+    throw new Error('Invalid questions format');
+  }
+
+  for (const row of questions) {
+    if (!row.items || !Array.isArray(row.items) || row.items.length !== itemsPerRow) {
+      throw new Error('Invalid items format in questions');
+    }
+
+    for (let i = 0; i < row.items.length; i++) {
+      const item = row.items[i];
+      if (!item.value || typeof item.value !== 'string') {
+        throw new Error('Invalid value in question item');
+      }
+      if (i < row.items.length - 1 && (!item.operator || typeof item.operator !== 'string')) {
+        throw new Error('Invalid operator in question item');
+      }
+    }
+  }
+
+  return true;
+};
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -51,11 +76,16 @@ export async function POST(req: Request) {
     const validatedData = examSchema.parse(body);
 
     // Generate questions if in automatic mode
-    const questions = validatedData.creationMode === 'automatic' 
-      ? generateExamRows(validatedData)
-      : validatedData.questionsJson 
-        ? JSON.parse(validatedData.questionsJson)
-        : null;
+    let questions;
+    if (validatedData.creationMode === 'automatic') {
+      questions = generateExamRows(validatedData);
+    } else if (validatedData.questionsJson) {
+      questions = JSON.parse(validatedData.questionsJson);
+      // Validate manual questions
+      validateManualQuestions(questions, validatedData.rowCount, validatedData.itemsPerRow);
+    } else {
+      questions = null;
+    }
 
     // Create exam without creationMode field
     const { creationMode, ...examData } = validatedData;

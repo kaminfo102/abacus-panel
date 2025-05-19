@@ -52,20 +52,9 @@ function generateExamRows(exam: Exam): ExamRow[] {
 }
 
 export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
-  // Debug: log questionsJson and parsed examRows
-  let parsedRows: ExamRow[] = [];
-  try {
-    parsedRows = exam.questionsJson ? JSON.parse(exam.questionsJson) : generateExamRows(exam);
-  } catch (e) {
-    console.error('Failed to parse questionsJson:', e, exam.questionsJson);
-    parsedRows = generateExamRows(exam);
-  }
-  console.log('questionsJson:', exam.questionsJson);
-  console.log('parsed examRows:', parsedRows);
-
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(exam.timeLimit);
-  const [examRows, setExamRows] = useState<ExamRow[]>(parsedRows);
+  const [examRows, setExamRows] = useState<ExamRow[]>([]);
   const [answers, setAnswers] = useState<{ [key: number]: Answer }>({});
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,18 +63,35 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   const [timeSpent, setTimeSpent] = useState(0);
   const [isAutoFinished, setIsAutoFinished] = useState(false);
 
+  // Parse and validate exam questions
   useEffect(() => {
     try {
+      let parsedRows: ExamRow[];
       if (exam.questionsJson) {
-        setExamRows(JSON.parse(exam.questionsJson));
+        parsedRows = JSON.parse(exam.questionsJson);
+        // Validate the parsed rows
+        if (!Array.isArray(parsedRows) || parsedRows.length !== exam.rowCount) {
+          throw new Error('Invalid questions format');
+        }
+        for (const row of parsedRows) {
+          if (!row.items || !Array.isArray(row.items) || row.items.length !== exam.itemsPerRow) {
+            throw new Error('Invalid items format in questions');
+          }
+        }
       } else {
-        setExamRows(generateExamRows(exam));
+        parsedRows = generateExamRows(exam);
       }
+      setExamRows(parsedRows);
     } catch (e) {
-      setExamRows(generateExamRows(exam));
-      console.error('Failed to parse questionsJson in useEffect:', e, exam.questionsJson);
+      console.error('Failed to parse questionsJson:', e);
+      toast({
+        title: 'خطا',
+        description: 'مشکلی در بارگذاری سوالات رخ داده است.',
+        variant: 'destructive',
+      });
+      router.push('/student/exams');
     }
-  }, [exam.questionsJson, exam]);
+  }, [exam, router]);
 
   useEffect(() => {
     if (finished) return;

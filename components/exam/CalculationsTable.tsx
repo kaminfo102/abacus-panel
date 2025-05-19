@@ -203,8 +203,12 @@ export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpd
                       )
                     )}
                   >
-                    {itemIndex === 0 ? row.items[itemIndex].value : (
-                      <span>{row.items[itemIndex].operator} {row.items[itemIndex].value}</span>
+                    {itemIndex === 0 ? (
+                      <span className="font-mono">{row.items[itemIndex].value}</span>
+                    ) : (
+                      <span className="font-mono">
+                        {row.items[itemIndex - 1].operator} {row.items[itemIndex].value}
+                      </span>
                     )}
                   </TableCell>
                 ))}
@@ -219,7 +223,7 @@ export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpd
                   <div className="flex flex-col gap-2 p-2">
                     <Input
                       ref={el => inputRefs.current[i] = el}
-                      className="text-center w-full"
+                      className="text-center w-full font-mono"
                       value={answers[i + 1]?.value || ""}
                       onChange={(e) => handleAnswerChange(i + 1, e.target.value)}
                       disabled={answers[i + 1]?.submitted || isDisabled}
