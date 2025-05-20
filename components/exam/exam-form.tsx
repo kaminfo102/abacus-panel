@@ -49,6 +49,7 @@ import {
   TableRow,
   TableHead,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -197,6 +198,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
     const values = form.getValues();
     const [questions, setQuestions] = useState<ExamRow[]>([]);
     const [error, setError] = useState('');
+    const [activeCell, setActiveCell] = useState<{row: number, col: number} | null>(null);
 
     useEffect(() => {
       // Initialize empty questions array
@@ -226,6 +228,17 @@ export function ExamForm({ initialData }: ExamFormProps) {
       const newQuestions = [...questions];
       newQuestions[rowIndex].items[colIndex].operator = operator;
       setQuestions(newQuestions);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, rowIndex: number, colIndex: number) => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const nextCol = colIndex + 1;
+        const nextRow = rowIndex + (nextCol >= values.itemsPerRow ? 1 : 0);
+        if (nextRow < values.rowCount) {
+          setActiveCell({ row: nextRow, col: nextCol % values.itemsPerRow });
+        }
+      }
     };
 
     const handleSaveQuestions = () => {
@@ -297,22 +310,33 @@ export function ExamForm({ initialData }: ExamFormProps) {
                         {questions.map((row, rowIndex) => (
                           <TableCell
                             key={rowIndex}
-                            className="text-center border-x border-gray-300"
+                            className={cn(
+                              "text-center border-x border-gray-300",
+                              activeCell?.row === rowIndex && activeCell?.col === itemIndex && "bg-primary/5"
+                            )}
                           >
                             <div className="flex flex-col items-center gap-2">
                               <Input
                                 type="number"
                                 value={row.items[itemIndex].value}
                                 onChange={(e) => handleValueChange(rowIndex, itemIndex, e.target.value)}
-                                className="w-24 text-center font-mono text-lg"
+                                onKeyDown={(e) => handleKeyDown(e, rowIndex, itemIndex)}
+                                onFocus={() => setActiveCell({ row: rowIndex, col: itemIndex })}
+                                className="w-24 text-center font-mono text-lg focus:ring-2 focus:ring-primary/50"
                                 maxLength={values.digitCount}
                                 placeholder="عدد"
                               />
                               {itemIndex < values.itemsPerRow - 1 && (
                                 <select
-                                  className="w-24 border rounded px-2 py-1.5 bg-white font-mono text-center text-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                  className={cn(
+                                    "w-24 border rounded px-2 py-1.5 bg-white font-mono text-center text-lg",
+                                    "focus:outline-none focus:ring-2 focus:ring-primary/50",
+                                    "hover:border-primary/50 transition-colors",
+                                    !row.items[itemIndex].operator && "text-gray-400"
+                                  )}
                                   value={row.items[itemIndex].operator}
                                   onChange={(e) => handleOperatorChange(rowIndex, itemIndex, e.target.value)}
+                                  onFocus={() => setActiveCell({ row: rowIndex, col: itemIndex })}
                                 >
                                   <option value="">انتخاب عملگر</option>
                                   {operatorOptions.map((op) => (
@@ -334,17 +358,24 @@ export function ExamForm({ initialData }: ExamFormProps) {
                 </Table>
               </div>
               {error && (
-                <div className="text-red-500 text-sm mt-2 bg-red-50 p-2 rounded-md border border-red-200">
+                <div className="text-red-500 text-sm mt-2 bg-red-50 p-3 rounded-md border border-red-200">
                   {error}
                 </div>
               )}
             </div>
 
             <div className="flex justify-end gap-4 mt-8">
-              <Button variant="outline" onClick={() => setShowManualInput(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowManualInput(false)}
+                className="h-11 px-6"
+              >
                 انصراف
               </Button>
-              <Button onClick={handleSaveQuestions}>
+              <Button 
+                onClick={handleSaveQuestions}
+                className="h-11 px-6"
+              >
                 ذخیره سوالات
               </Button>
             </div>
