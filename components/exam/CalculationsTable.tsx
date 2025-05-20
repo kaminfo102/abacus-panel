@@ -22,9 +22,10 @@ interface CalculationsTableProps {
   isDisabled?: boolean;
   onAnswersUpdate: (answers: { [key: number]: Answer }) => void;
   examTitle?: string;
+  isManual?: boolean;
 }
 
-export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpdate, examTitle }: CalculationsTableProps) {
+export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpdate, examTitle, isManual = false }: CalculationsTableProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
   const [answers, setAnswers] = useState<{ [key: number]: Answer }>(
@@ -203,13 +204,31 @@ export function CalculationsTable({ examData, onFinish, isDisabled, onAnswersUpd
                       )
                     )}
                   >
-                    {itemIndex === 0 ? (
-                      <span className="font-mono">{row.items[itemIndex].value}</span>
-                    ) : (
-                      <span className="font-mono">
-                        {row.items[itemIndex - 1].operator} {row.items[itemIndex].value}
-                      </span>
-                    )}
+                    <div className="flex items-center justify-center gap-2">
+                      {isManual ? (
+                        itemIndex === 0 ? (
+                          <span className="font-mono">{row.items[itemIndex].value}</span>
+                        ) : (
+                          <>
+                            {row.items[itemIndex].operator && (
+                              <span className="font-mono">{row.items[itemIndex].operator}</span>
+                            )}
+                            <span className="font-mono">{row.items[itemIndex].value}</span>
+                          </>
+                        )
+                      ) : (
+                        itemIndex === 0 ? (
+                          <span className="font-mono">{row.items[itemIndex].value}</span>
+                        ) : (
+                          <>
+                            {row.items[itemIndex].operator && (
+                              <span className="font-mono">{row.items[itemIndex].operator}</span>
+                            )}
+                            <span className="font-mono">{row.items[itemIndex].value}</span>
+                          </>
+                        )
+                      )}
+                    </div>
                   </TableCell>
                 ))}
                 <TableCell className="text-center font-bold border-l border-gray-300">

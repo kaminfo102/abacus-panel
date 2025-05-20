@@ -126,6 +126,14 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     
     // محاسبه تعداد پاسخ صحیح
     const totalCorrect = Object.values(answers).filter(a => a.isCorrect).length;
+    if (!examRows || examRows.length === 0) {
+      toast({
+        title: 'خطا',
+        description: 'مشکلی در محاسبه نمره رخ داده است.',
+        variant: 'destructive',
+      });
+      return;
+    }
     const score = Math.round((totalCorrect / examRows.length) * 100);
 
     // تبدیل پاسخ‌ها به فرمت صحیح با ایندکس‌های درست
@@ -203,6 +211,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
               isDisabled={isLoading || finished || timeLeft === 0}
               onAnswersUpdate={handleAnswersUpdate}
               examTitle={exam.title}
+              isManual={exam.isManual || exam.creationMode === 'manual'}
             />
           </div>
           <div className="mt-6 flex flex-col items-center gap-4">
