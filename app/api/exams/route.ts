@@ -49,6 +49,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validatedData = examSchema.parse(body);
 
+    // داده‌های سوالات جدید
+    let addSubQuestions = body.addSubQuestions;
+    let mulDivQuestions = body.mulDivQuestions;
+    if (typeof addSubQuestions === 'string') addSubQuestions = JSON.parse(addSubQuestions);
+    if (typeof mulDivQuestions === 'string') mulDivQuestions = JSON.parse(mulDivQuestions);
+
     // Generate questions and save in questionsJson
     const questions = generateExamRows(validatedData);
 
@@ -56,7 +62,8 @@ export async function POST(req: Request) {
     const exam = await db.exam.create({
       data: {
         ...validatedData,
-        questionsJson: JSON.stringify(questions),
+        addSubQuestions: addSubQuestions ?? undefined,
+        mulDivQuestions: mulDivQuestions ?? undefined,
       },
     });
 

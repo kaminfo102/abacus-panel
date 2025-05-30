@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -33,6 +33,8 @@ import type { ExamSettings, Operator } from "@/types/exam";
 import { CheckboxM } from '../ui/checkboxM';
 import { Label } from '../ui/label';
 import { OPERATOR_LABELS } from '@/types/constants';
+import { AddSubQuestionsTable } from './AddSubQuestionsTable';
+import { MulDivQuestionsTable } from './MulDivQuestionsTable';
 
 const formSchema = z.object({
   title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
@@ -68,6 +70,46 @@ export function ExamForm({ initialData }: ExamFormProps) {
     },
   });
 
+  const [addSubQuestions, setAddSubQuestions] = useState([
+    { numbers: [0, 0], answer: '' }
+  ]);
+
+  const [mulDivQuestions, setMulDivQuestions] = useState([
+    { left: 0, right: 0, answer: '' }
+  ]);
+
+  const rowCount = form.watch('rowCount');
+  const itemsPerRow = form.watch('itemsPerRow');
+
+  useEffect(() => {
+    setAddSubQuestions(prev => {
+      const newQuestions = [];
+      for (let i = 0; i < rowCount; i++) {
+        const prevQ = prev[i] || {};
+        const numbers = Array.from({ length: itemsPerRow }, (_, j) => prevQ.numbers && prevQ.numbers[j] !== undefined ? prevQ.numbers[j] : 0);
+        newQuestions.push({
+          numbers,
+          answer: prevQ.answer ?? ''
+        });
+      }
+      return newQuestions;
+    });
+    setMulDivQuestions(prev => {
+      const newQuestions = [];
+      for (let i = 0; i < rowCount; i++) {
+        const prevQ = prev[i] || {};
+        const numbers = Array.from({ length: itemsPerRow }, (_, j) => prevQ.numbers && prevQ.numbers[j] !== undefined ? prevQ.numbers[j] : 0);
+        const operators = Array.from({ length: Math.max(itemsPerRow - 1, 1) }, (_, j) => prevQ.operators && prevQ.operators[j] ? prevQ.operators[j] : '×');
+        newQuestions.push({
+          numbers,
+          operators,
+          answer: prevQ.answer ?? ''
+        });
+      }
+      return newQuestions;
+    });
+  }, [rowCount, itemsPerRow]);
+
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
 
@@ -82,6 +124,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
         ...values,
         operators: settings.operators.join(','),
         timeLimit: values.timeLimit * 60,
+        addSubQuestions: settings.operators.some(op => op === '+' || op === '-') ? addSubQuestions : undefined,
+        mulDivQuestions: settings.operators.some(op => op === '*' || op === '/') ? mulDivQuestions : undefined,
       };
 
       const response = await fetch(url, {
@@ -362,6 +406,23 @@ export function ExamForm({ initialData }: ExamFormProps) {
             
             
             
+
+            {/* جدول جمع/تفریق */}
+            {settings.operators.some(op => op === '+' || op === '-') && (
+              <AddSubQuestionsTable
+                questions={addSubQuestions}
+                setQuestions={setAddSubQuestions}
+                active={true}
+              />
+            )}
+            {/* جدول ضرب/تقسیم */}
+            {settings.operators.some(op => op === '*' || op === '/') && (
+              <MulDivQuestionsTable
+                questions={mulDivQuestions}
+                setQuestions={setMulDivQuestions}
+                active={true}
+              />
+            )}
 
             <div className="flex justify-end gap-4 mt-8 w-full ">
               <Button 

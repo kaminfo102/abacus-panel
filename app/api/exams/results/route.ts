@@ -8,8 +8,8 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 const examResultSchema = z.object({
   examId: z.string(),
   studentId: z.string(),
-  score: z.number().min(0).max(100),
-  answers: z.string(),
+  addSubAnswers: z.any().optional(),
+  mulDivAnswers: z.any().optional(),
   timeSpent: z.number().optional(),
 });
 
@@ -31,7 +31,10 @@ export async function POST(req: Request) {
 
     // Create exam result
     const data: any = {
-      ...validatedData,
+      examId: validatedData.examId,
+      studentId: validatedData.studentId,
+      addSubAnswers: validatedData.addSubAnswers ?? undefined,
+      mulDivAnswers: validatedData.mulDivAnswers ?? undefined,
       endTime: new Date(),
     };
     if (validatedData.timeSpent !== undefined) {

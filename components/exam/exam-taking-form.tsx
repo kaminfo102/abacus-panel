@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Clock } from 'lucide-react';
 import { Student, Exam } from '@prisma/client';
-import { CalculationsTable, Answer } from './CalculationsTable';
 import { AbacusComponent } from './Abacus';
 import type { ExamRow } from '../../lib/types';
+import { StudentAddSubTable } from './StudentAddSubTable';
+import { StudentMulDivTable } from './StudentMulDivTable';
 
 interface ExamWithQuestionsJson extends Exam {
   questionsJson: string | null;
@@ -63,10 +64,19 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   console.log('questionsJson:', exam.questionsJson);
   console.log('parsed examRows:', parsedRows);
 
+  // خواندن سوالات جدید از exam
+  let addSubQuestions: any[] = [];
+  let mulDivQuestions: any[] = [];
+  try {
+    if (exam.addSubQuestions) addSubQuestions = typeof exam.addSubQuestions === 'string' ? JSON.parse(exam.addSubQuestions) : exam.addSubQuestions;
+    if (exam.mulDivQuestions) mulDivQuestions = typeof exam.mulDivQuestions === 'string' ? JSON.parse(exam.mulDivQuestions) : exam.mulDivQuestions;
+  } catch (e) {
+    addSubQuestions = [];
+    mulDivQuestions = [];
+  }
+
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(exam.timeLimit);
-  const [examRows, setExamRows] = useState<ExamRow[]>(parsedRows);
-  const [answers, setAnswers] = useState<{ [key: number]: Answer }>({});
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
@@ -74,16 +84,9 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   const [timeSpent, setTimeSpent] = useState(0);
   const [isAutoFinished, setIsAutoFinished] = useState(false);
 
-  useEffect(() => {
-    try {
-      if (exam.questionsJson) {
-        setExamRows(JSON.parse(exam.questionsJson));
-      }
-    } catch (e) {
-      setExamRows([]);
-      console.error('Failed to parse questionsJson in useEffect:', e, exam.questionsJson);
-    }
-  }, [exam.questionsJson]);
+  // state پاسخ‌ها
+  const [addSubAnswers, setAddSubAnswers] = useState<(string | number)[]>(addSubQuestions.map(() => ''));
+  const [mulDivAnswers, setMulDivAnswers] = useState<(string | number)[]>(mulDivQuestions.map(() => ''));
 
   useEffect(() => {
     if (finished) return;
@@ -97,37 +100,18 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         }
         return prev - 1;
       });
-      // Update time spent every second
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(timerRef.current!);
   }, [finished, startTime]);
 
-  const handleAnswersUpdate = (newAnswers: { [key: number]: Answer }) => {
-    setAnswers(newAnswers);
-  };
-
+  // ثبت آزمون
   const handleFinishExam = async (autoFinish = false) => {
     if (isLoading || finished) return;
     setIsLoading(true);
     setFinished(true);
     clearInterval(timerRef.current!);
-    
-    // Calculate final time spent in seconds
     const finalTimeSpent = Math.floor((Date.now() - startTime) / 1000);
-    
-    // محاسبه تعداد پاسخ صحیح
-    const totalCorrect = Object.values(answers).filter(a => a.isCorrect).length;
-    const score = Math.round((totalCorrect / examRows.length) * 100);
-
-    // تبدیل پاسخ‌ها به فرمت صحیح با ایندکس‌های درست
-    const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
-      // تبدیل کلید به عدد و کم کردن 1 برای تطابق با ایندکس آرایه
-      const index = parseInt(key) - 1;
-      acc[index] = value;
-      return acc;
-    }, {} as { [key: number]: Answer });
-
     try {
       const response = await fetch('/api/exams/results', {
         method: 'POST',
@@ -135,8 +119,8 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         body: JSON.stringify({
           examId: exam.id,
           studentId: student.id,
-          score,
-          answers: JSON.stringify(formattedAnswers),
+          addSubAnswers,
+          mulDivAnswers,
           timeSpent: finalTimeSpent,
         }),
       });
@@ -154,7 +138,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         title: autoFinish ? 'زمان آزمون به پایان رسید' : 'آزمون با موفقیت ثبت شد',
         description: autoFinish
           ? 'زمان شما به پایان رسید. نتیجه آزمون ثبت شد.'
-          : `نمره شما: ${score}`,
+          : 'پاسخ‌های شما ثبت شد.',
       });
       router.push(`/student/exams/${exam.id}/result`);
     } catch (error) {
@@ -166,11 +150,6 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Fix for CalculationsTable onFinish prop
-  const handleTableFinish = (correctAnswers: number) => {
-    handleFinishExam(true);
   };
 
   return (
@@ -188,14 +167,22 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
             </div>
           </div>
           <div className="space-y-4">
-            
-            <CalculationsTable
-              examData={examRows}
-              onFinish={handleTableFinish}
-              isDisabled={isLoading || finished || timeLeft === 0}
-              onAnswersUpdate={handleAnswersUpdate}
-              examTitle={exam.title}
-            />
+            {addSubQuestions.length > 0 && (
+              <StudentAddSubTable
+                questions={addSubQuestions}
+                answers={addSubAnswers}
+                setAnswers={setAddSubAnswers}
+                disabled={isLoading || finished || timeLeft === 0}
+              />
+            )}
+            {mulDivQuestions.length > 0 && (
+              <StudentMulDivTable
+                questions={mulDivQuestions}
+                answers={mulDivAnswers}
+                setAnswers={setMulDivAnswers}
+                disabled={isLoading || finished || timeLeft === 0}
+              />
+            )}
           </div>
           <div className="mt-6 flex flex-col items-center gap-4">
             <Button

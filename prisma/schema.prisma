@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = "postgresql://postgres:l1UuuOcSCuklxKqe@services.gen7.chabokan.net:12834/michael"
+  provider = "sqlite"
+  url      = "file:./dev.db"
   
 }
 
@@ -64,7 +64,8 @@ model Exam {
   timeLimit    Int      // in seconds
   operators    String   // e.g. "+,-,*"
   term         String   // student term
-  questionsJson String?
+  addSubQuestions Json?
+  mulDivQuestions Json?
   students     Student[] @relation("StudentExams")
   results      ExamResult[]
   createdAt    DateTime @default(now())
@@ -92,7 +93,8 @@ model ExamResult {
   examId      String
   studentId   String
   score       Int
-  answers     String    // JSON string of answers
+  addSubAnswers Json?
+  mulDivAnswers Json?
   startTime   DateTime  @default(now())
   endTime     DateTime?
   timeSpent   Int?
