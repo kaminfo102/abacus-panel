@@ -23,7 +23,7 @@ export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ question
     <div className="overflow-x-auto mt-6">
       <h2 className="font-bold text-lg mb-2">سوالات ضرب و تقسیم</h2>
       <table className="min-w-full border border-gray-300 rounded-lg" dir="ltr">
-        <thead>
+        <thead className="bg-violet-700 text-white">
           <tr className="bg-primary/10">
             <th className="p-2 border">شماره</th>
             <th className="p-2 border">سوال</th>
@@ -33,7 +33,7 @@ export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ question
         <tbody>
           {questions.map((q, idx) => (
             <tr key={idx}>
-              <td className="p-2 border text-center font-bold">{idx + 1}</td>
+              <td className="p-2 border text-center font-bold bg-violet-700 text-white">{idx + 1}</td>
               <td className="p-2 border text-center">
                 {q.numbers.map((num, i) => (
                   <React.Fragment key={i}>

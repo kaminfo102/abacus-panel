@@ -82,7 +82,7 @@ export const MulDivQuestionsTable: React.FC<MulDivQuestionsTableProps> = ({ ques
         <tbody>
           {questions.map((q, qIdx) => (
             <tr key={qIdx}>
-              <td className="p-2 border text-center font-bold">{qIdx + 1}</td>
+              <td className="p-2 border text-center font-bold bg-orange-100">{qIdx + 1}</td>
               <td className="p-2 border text-center">
                 <div className="flex flex-wrap items-center gap-2 justify-center">
                   {q.numbers.map((num, nIdx) => (

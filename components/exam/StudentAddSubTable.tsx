@@ -28,9 +28,9 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
       <table className="min-w-full border border-gray-300 rounded-lg" dir="ltr">
         <thead>
           <tr className="bg-primary/10">
-            <th className="p-2 border text-center align-middle" rowSpan={maxRows + 2}>Abacus</th>
+            <th className="p-2 border text-center align-middle bg-violet-700 text-white" rowSpan={maxRows + 2}>Abacus</th>
             {questions.map((_, idx) => (
-              <th key={idx} className="p-2 border text-center">{idx + 1}</th>
+              <th key={idx} className="p-2 border text-center bg-violet-700 text-white">{idx + 1}</th>
             ))}
           </tr>
         </thead>
@@ -39,7 +39,7 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
           {Array.from({ length: maxRows }).map((_, rowIdx) => (
             <tr key={rowIdx}>
               {/* ستون راهنما فقط در اولین ستون */}
-              {rowIdx === 0 && <td className="p-2 border text-center align-middle" rowSpan={maxRows}> </td>}
+              {rowIdx === 0 && <td className="p-2 border text-center align-middle bg-violet-700 text-white" rowSpan={maxRows}> </td>}
               {questions.map((q, colIdx) => (
                 <td key={colIdx} className="p-2 border text-center">
                   {q.numbers[rowIdx] !== undefined ? q.numbers[rowIdx] : ''}
@@ -49,7 +49,7 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
           ))}
           {/* ردیف جواب */}
           <tr>
-            <td className="p-2 border text-center font-bold">جواب</td>
+            <td className="p-2 border text-center font-bold bg-violet-700 text-white">جواب</td>
             {questions.map((_, idx) => (
               <td key={idx} className="p-2 border text-center">
                 <Input

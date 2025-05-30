@@ -65,7 +65,7 @@ export const AddSubQuestionsTable: React.FC<AddSubQuestionsTableProps> = ({ ques
         <tbody>
           {questions.map((q, qIdx) => (
             <tr key={qIdx}>
-              <td className="p-2 border text-center">{qIdx + 1}</td>
+              <td className="p-2 border text-center font-bold bg-orange-100">{qIdx + 1}</td>
               <td className="p-2 border">
                 <div className="flex flex-wrap gap-2">
                   {q.numbers.map((num, nIdx) => (
