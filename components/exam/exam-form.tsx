@@ -251,22 +251,22 @@ export function ExamForm({ initialData }: ExamFormProps) {
   };
 
   return (
-    <Card className="p-8 max-w-4xl mx-auto">
+    <Card className="p-4 sm:p-6 md:p-8 w-full max-w-6xl mx-auto">
       {/* راهنمای تکمیل فرم */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
-          <h3 className="font-semibold text-blue-700 mb-3">راهنمای تکمیل فرم</h3>
-          <ul className="space-y-2 text-blue-600">
-            <GuideItem text="تعداد ارقام: تعیین کننده حداکثر رقم‌های اعداد در محاسبات" />
-            <GuideItem text="تعداد سوال: مشخص کننده تعداد کل سوالات آزمون" />
-            <GuideItem text="تعداد آیتم: تعداد اعداد در هر سطر برای محاسبه" />
-            <GuideItem text="مدت زمان: زمان کل آزمون به دقیقه" />
-          </ul>
-        </div>
+        <h3 className="font-semibold text-blue-700 mb-3">راهنمای تکمیل فرم</h3>
+        <ul className="space-y-2 text-blue-600">
+          <GuideItem text="تعداد ارقام: تعیین کننده حداکثر رقم‌های اعداد در محاسبات" />
+          <GuideItem text="تعداد سوال: مشخص کننده تعداد کل سوالات آزمون" />
+          <GuideItem text="تعداد آیتم: تعداد اعداد در هر سطر برای محاسبه" />
+          <GuideItem text="مدت زمان: زمان کل آزمون به دقیقه" />
+        </ul>
+      </div>
       <CardContent className="pt-3">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
-          <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
@@ -283,39 +283,36 @@ export function ExamForm({ initialData }: ExamFormProps) {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="term"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ترم</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="text-right [&>span]:text-right">
+                          <SelectValue placeholder="ترم را انتخاب کنید" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="text-right">
+                        {STUDENT_TERMS.map((term) => (
+                          <SelectItem key={term} value={term} className="text-right">
+                            {term}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-                            <FormField
-                              control={form.control}
-                              name="term"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>ترم</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger className="text-right [&>span]:text-right">
-                                        <SelectValue placeholder="ترم را انتخاب کنید" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent className="text-right">
-                                      {STUDENT_TERMS.map((term) => (
-                                        <SelectItem key={term} value={term} className="text-right">
-                                          {term}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormDescription>
-                                    آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-          </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              
-
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               <FormField
                 control={form.control}
                 name="digitCount"
@@ -327,7 +324,6 @@ export function ExamForm({ initialData }: ExamFormProps) {
                     </FormLabel>
                     <FormControl>
                       <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
-                      
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -345,7 +341,6 @@ export function ExamForm({ initialData }: ExamFormProps) {
                     </FormLabel>
                     <FormControl>
                       <NumberInput value={field.value} onChange={field.onChange} min={1} max={999999} step={1} />
-                      
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -359,7 +354,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Grid className="h-4 w-4" />
-                تعداد آیتم در هر سوال
+                      تعداد آیتم در هر سوال
                     </FormLabel>
                     <FormControl>
                       <NumberInput
@@ -368,7 +363,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                         min={LIMITS.itemsPerRow.min}
                         max={LIMITS.itemsPerRow.max}
                         step={1}
-                        className="w-full min-w-[120px]"
+                        className="w-full"
                       />
                     </FormControl>
                     <FormMessage />
@@ -395,7 +390,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                         }}
                         min={1}
                         step={1}
-                        className="w-full min-w-[120px]"
+                        className="w-full"
                       />
                     </FormControl>
                     <FormDescription>
@@ -405,51 +400,43 @@ export function ExamForm({ initialData }: ExamFormProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="operators"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
-                      عملگرها
-                    </FormLabel>
-                    <FormControl>
-                       {/* بخش چک‌باکس‌ها */}
-                        <div className="bg-slate-50 p-6 rounded-xl">
-                            <h3 className="font-semibold text-lg text-slate-700 mb-4">عملگرهای مجاز</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                                {(['+', '-', '*', '/'] as Operator[]).map((op) => (
-                                    <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
-                                        <CheckboxM
-                                            id={`op-${op}`}
-                                            checked={form.watch('operators').includes(op)}
-                                            onCheckedChange={() => toggleOperator(op)}
-                                        />
-                                        <Label
-                                            htmlFor={`op-${op}`}
-                                            className="text-sm font-medium cursor-pointer"
-                                        >
-                                            {OPERATOR_LABELS[op]}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                      </div>
-                      
-                    </FormControl>
-                    
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              
             </div>
-            
-            
-            
+
+            <FormField
+              control={form.control}
+              name="operators"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    عملگرها
+                  </FormLabel>
+                  <FormControl>
+                    <div className="bg-slate-50 p-6 rounded-xl">
+                      <h3 className="font-semibold text-lg text-slate-700 mb-4">عملگرهای مجاز</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {(['+', '-', '*', '/'] as Operator[]).map((op) => (
+                          <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
+                            <CheckboxM
+                              id={`op-${op}`}
+                              checked={form.watch('operators').includes(op)}
+                              onCheckedChange={() => toggleOperator(op)}
+                            />
+                            <Label
+                              htmlFor={`op-${op}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {OPERATOR_LABELS[op]}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* جدول جمع/تفریق */}
             {form.watch('operators').some(op => op === '+' || op === '-') && (
@@ -468,7 +455,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
               />
             )}
 
-            <div className="flex justify-end gap-4 mt-8 w-full ">
+            <div className="flex justify-end gap-4 mt-8">
               <Button 
                 variant="outline" 
                 type="button" 
