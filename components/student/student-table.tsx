@@ -147,8 +147,8 @@ export function StudentTable({ students }: StudentTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="relative w-full max-w-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -162,7 +162,7 @@ export function StudentTable({ students }: StudentTableProps) {
           <Button
             variant="destructive"
             onClick={() => setStudentToDelete('bulk')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <Trash2 className="h-4 w-4" />
             حذف {selectedStudents.length} دانش‌آموز
@@ -170,22 +170,22 @@ export function StudentTable({ students }: StudentTableProps) {
         )}
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
+              <TableHead className="w-[40px] sm:w-[50px]">
                 <Checkbox
                   checked={paginatedStudents.length > 0 && selectedStudents.length === paginatedStudents.length}
                   onCheckedChange={handleSelectAll}
                   aria-label="انتخاب همه"
                 />
               </TableHead>
-              <TableHead className="text-right w-[50px]">ردیف</TableHead>
+              <TableHead className="text-right w-[40px] sm:w-[50px]">ردیف</TableHead>
               <TableHead className="text-right">نام و نام‌خانوادگی</TableHead>
-              <TableHead className="text-right">کد ملی</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">کد ملی</TableHead>
               <TableHead className="text-right hidden md:table-cell">شماره موبایل</TableHead>
-              <TableHead className="text-right hidden md:table-cell">شهرستان</TableHead>
+              <TableHead className="text-right hidden lg:table-cell">شهرستان</TableHead>
               <TableHead className="text-right">
                 <Button
                   variant="ghost"
@@ -200,7 +200,7 @@ export function StudentTable({ students }: StudentTableProps) {
                   )}
                 </Button>
               </TableHead>
-              <TableHead className="text-right">عملیات</TableHead>
+              <TableHead className="text-right w-[120px]">عملیات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -224,19 +224,24 @@ export function StudentTable({ students }: StudentTableProps) {
                     {startIndex + index + 1}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {student.firstName} {student.lastName}
+                    <div className="flex flex-col">
+                      <span>{student.firstName} {student.lastName}</span>
+                      <span className="text-xs text-muted-foreground sm:hidden">
+                        {student.nationalId}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="text-right">{student.nationalId}</TableCell>
+                  <TableCell className="text-right hidden sm:table-cell">{student.nationalId}</TableCell>
                   <TableCell className="text-right hidden md:table-cell">{student.mobileNumber}</TableCell>
-                  <TableCell className="text-right hidden md:table-cell">{student.city}</TableCell>
+                  <TableCell className="text-right hidden lg:table-cell">{student.city}</TableCell>
                   <TableCell className="text-right">{student.term}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => router.push(`/admin/students/${student.id}`)}
-                        className="hover:bg-primary/10"
+                        className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
                       >
                         <Eye className="h-4 w-4 text-blue-500" />
                       </Button>
@@ -244,7 +249,7 @@ export function StudentTable({ students }: StudentTableProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(student.id)}
-                        className="hover:bg-primary/10"
+                        className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
                       >
                         <Pencil className="h-4 w-4 text-primary" />
                       </Button>
@@ -252,7 +257,7 @@ export function StudentTable({ students }: StudentTableProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => setStudentToDelete(student.id)}
-                        className="hover:bg-destructive/10"
+                        className="hover:bg-destructive/10 h-8 w-8 sm:h-9 sm:w-9"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -265,8 +270,8 @@ export function StudentTable({ students }: StudentTableProps) {
           <TableFooter>
             <TableRow>
               <TableCell colSpan={8} className="text-right">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
