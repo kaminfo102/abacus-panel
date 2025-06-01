@@ -72,7 +72,8 @@ export function StudentImport() {
         mobileNumber: '09123456789',
         dateOfBirth: '1380-01-01',
         city: 'سنندج',
-        term: 'استارتر'
+        term: 'استارتر',
+        role: 'STUDENT'
       },
       {
         firstName: 'سارا',
@@ -81,7 +82,8 @@ export function StudentImport() {
         mobileNumber: '09123456788',
         dateOfBirth: '1381-02-02',
         city: 'سقز',
-        term: 'ترم 1'
+        term: 'ترم 1',
+        role: 'STUDENT'
       }
     ];
 

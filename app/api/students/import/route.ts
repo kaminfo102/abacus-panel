@@ -13,6 +13,7 @@ const studentImportSchema = z.object({
   dateOfBirth: z.string().optional(),
   city: z.string().min(1, 'شهرستان الزامی است'),
   term: z.string().min(1, 'ترم الزامی است'),
+  role: z.enum(['STUDENT']).default('STUDENT'),
 });
 
 export async function POST(req: Request) {
@@ -74,7 +75,10 @@ export async function POST(req: Request) {
           // Create user account
           const user = await db.user.create({
             data: {
-              role: 'STUDENT',
+              name: `${studentData.firstName} ${studentData.lastName}`,
+              email: `${studentData.nationalId}@example.com`,
+              password: studentData.mobileNumber,
+              role: studentData.role,
               student: {
                 create: {
                   firstName: studentData.firstName,
