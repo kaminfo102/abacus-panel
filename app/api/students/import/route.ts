@@ -31,63 +31,84 @@ export async function POST(req: Request) {
     }
 
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer);
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(worksheet);
 
-    const results = {
-      success: 0,
-      failed: 0,
-      errors: [] as string[],
-    };
+    try {
+      const workbook = XLSX.read(buffer);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(worksheet);
 
-    for (const row of data) {
-      try {
-        const studentData = studentImportSchema.parse(row);
-        
-        // Check if student with this national ID already exists
-        const existingStudent = await db.student.findFirst({
-          where: { nationalId: studentData.nationalId },
-        });
+      const results = {
+        success: 0,
+        failed: 0,
+        errors: [] as string[],
+      };
 
-        if (existingStudent) {
-          results.failed++;
-          results.errors.push(`دانش‌آموز با کد ملی ${studentData.nationalId} قبلاً ثبت شده است`);
-          continue;
-        }
+      for (const row of data) {
+        try {
+          // Explicitly convert potential numbers to strings for validation
+          const processedRow = {
+            ...row as any,
+            nationalId: String((row as any).nationalId),
+            mobileNumber: String((row as any).mobileNumber),
+            // Convert dateOfBirth to string if it exists and is not already a string
+            ...(row as any).dateOfBirth !== undefined && {
+              dateOfBirth: typeof (row as any).dateOfBirth !== 'string' 
+                ? String((row as any).dateOfBirth) 
+                : (row as any).dateOfBirth
+            }
+          };
 
-        // Create user account
-        const user = await db.user.create({
-          data: {
-            role: 'STUDENT',
-            student: {
-              create: {
-                firstName: studentData.firstName,
-                lastName: studentData.lastName,
-                nationalId: studentData.nationalId,
-                mobileNumber: studentData.mobileNumber,
-                dateOfBirth: studentData.dateOfBirth,
-                city: studentData.city,
-                term: studentData.term,
+          const studentData = studentImportSchema.parse(processedRow);
+          
+          // Check if student with this national ID already exists
+          const existingStudent = await db.student.findFirst({
+            where: { nationalId: studentData.nationalId },
+          });
+
+          if (existingStudent) {
+            results.failed++;
+            results.errors.push(`دانش‌آموز با کد ملی ${studentData.nationalId} قبلاً ثبت شده است`);
+            continue;
+          }
+
+          // Create user account
+          const user = await db.user.create({
+            data: {
+              role: 'STUDENT',
+              student: {
+                create: {
+                  firstName: studentData.firstName,
+                  lastName: studentData.lastName,
+                  nationalId: studentData.nationalId,
+                  mobileNumber: studentData.mobileNumber,
+                  dateOfBirth: studentData.dateOfBirth,
+                  city: studentData.city,
+                  term: studentData.term,
+                },
               },
             },
-          },
-        });
+          });
 
-        results.success++;
-      } catch (error) {
-        results.failed++;
-        if (error instanceof z.ZodError) {
-          results.errors.push(`خطا در داده‌های سطر ${data.indexOf(row) + 2}: ${error.errors[0].message}`);
-        } else {
-          results.errors.push(`خطای ناشناخته در سطر ${data.indexOf(row) + 2}`);
+          results.success++;
+        } catch (error) {
+          results.failed++;
+          if (error instanceof z.ZodError) {
+            results.errors.push(`خطا در داده‌های سطر ${data.indexOf(row) + 2}: ${error.errors[0].message}`);
+          } else {
+            // Capture the actual error message for unknown errors
+            results.errors.push(`خطای ناشناخته در سطر ${data.indexOf(row) + 2}: ${(error as Error).message}`);
+          }
         }
       }
+
+      return NextResponse.json(results);
+    } catch (fileProcessingError) {
+      console.error('[STUDENTS_IMPORT - FILE PROCESSING]', fileProcessingError);
+      return new NextResponse(`Error processing file: ${(fileProcessingError as Error).message}`, { status: 400 });
     }
 
-    return NextResponse.json(results);
   } catch (error) {
-    console.error('[STUDENTS_IMPORT]', error);
+    console.error('[STUDENTS_IMPORT - GENERAL]', error);
     return new NextResponse('Internal error', { status: 500 });
   }
 } 
