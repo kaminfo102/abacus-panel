@@ -42,14 +42,38 @@ const formSchema = z.object({
   rowCount: z.coerce.number().min(1, 'حداقل یک ردیف باید وارد شود'),
   itemsPerRow: z.coerce.number().min(1, 'حداقل یک آیتم در هر ردیف باید وارد شود'),
   timeLimit: z.coerce.number().min(1, 'حداقل زمان 1 دقیقه باید باشد'),
-  operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
+  operators: z.array(z.string()).min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ExamFormProps {
-  initialData?: FormValues & { id: string };
+  initialData?: FormValues & {
+    id: string;
+    addSubQuestions?: {
+      numbers: number[];
+      operators: ('+' | '-')[];
+      answer: number | '';
+    }[];
+    mulDivQuestions?: {
+      numbers: number[];
+      operators: ('×' | '÷')[];
+      answer: number | '';
+    }[];
+  };
+}
+
+interface AddSubQuestion {
+  numbers: number[];
+  operators: ('+' | '-')[];
+  answer: number | '';
+}
+
+interface MulDivQuestion {
+  numbers: number[];
+  operators: ('×' | '÷')[];
+  answer: number | '';
 }
 
 export function ExamForm({ initialData }: ExamFormProps) {
@@ -57,26 +81,48 @@ export function ExamForm({ initialData }: ExamFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
 
+  console.log('Initial data received:', initialData);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      title: '',
-      digitCount: 1,
-      rowCount: 1,
-      itemsPerRow: 1,
-      timeLimit: 1,
-      operators: '+',
-      term: '',
+    defaultValues: {
+      title: initialData?.title || '',
+      digitCount: initialData?.digitCount || 1,
+      rowCount: initialData?.rowCount || 1,
+      itemsPerRow: initialData?.itemsPerRow || 1,
+      timeLimit: initialData?.timeLimit || 1,
+      operators: initialData?.operators || ['+'],
+      term: initialData?.term || '',
     },
   });
 
-  const [addSubQuestions, setAddSubQuestions] = useState([
-    { numbers: [0, 0], answer: '' }
-  ]);
+  const [addSubQuestions, setAddSubQuestions] = useState<AddSubQuestion[]>(() => {
+    if (!initialData?.addSubQuestions?.length) {
+      return [{ numbers: [0, 0], operators: ['+'], answer: '' }];
+    }
 
-  const [mulDivQuestions, setMulDivQuestions] = useState([
-    { left: 0, right: 0, answer: '' }
-  ]);
+    return initialData.addSubQuestions.map(q => ({
+      numbers: Array.isArray(q.numbers) ? q.numbers : [0, 0],
+      operators: Array.isArray(q.operators) 
+        ? q.operators.filter(op => op === '+' || op === '-').map(op => op as '+' | '-')
+        : ['+'],
+      answer: q.answer ?? ''
+    }));
+  });
+
+  const [mulDivQuestions, setMulDivQuestions] = useState<MulDivQuestion[]>(() => {
+    if (!initialData?.mulDivQuestions?.length) {
+      return [{ numbers: [0, 0], operators: ['×'], answer: '' }];
+    }
+
+    return initialData.mulDivQuestions.map(q => ({
+      numbers: Array.isArray(q.numbers) ? q.numbers : [0, 0],
+      operators: Array.isArray(q.operators) 
+        ? q.operators.filter(op => op === '×' || op === '÷').map(op => op as '×' | '÷')
+        : ['×'],
+      answer: q.answer ?? ''
+    }));
+  });
 
   const rowCount = form.watch('rowCount');
   const itemsPerRow = form.watch('itemsPerRow');
@@ -89,6 +135,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
         const numbers = Array.from({ length: itemsPerRow }, (_, j) => prevQ.numbers && prevQ.numbers[j] !== undefined ? prevQ.numbers[j] : 0);
         newQuestions.push({
           numbers,
+          operators: prevQ.operators || ['+'],
           answer: prevQ.answer ?? ''
         });
       }
@@ -122,11 +169,13 @@ export function ExamForm({ initialData }: ExamFormProps) {
 
       const formData = {
         ...values,
-        operators: settings.operators.join(','),
+        operators: values.operators.join(','),
         timeLimit: values.timeLimit * 60,
-        addSubQuestions: settings.operators.some(op => op === '+' || op === '-') ? addSubQuestions : undefined,
-        mulDivQuestions: settings.operators.some(op => op === '*' || op === '/') ? mulDivQuestions : undefined,
+        addSubQuestions: values.operators.some(op => op === '+' || op === '-') ? addSubQuestions : undefined,
+        mulDivQuestions: values.operators.some(op => op === '*' || op === '/') ? mulDivQuestions : undefined,
       };
+
+      console.log('Submitting form data:', formData);
 
       const response = await fetch(url, {
         method,
@@ -137,7 +186,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error();
+        const error = await response.text();
+        throw new Error(error);
       }
 
       toast({
@@ -150,11 +200,14 @@ export function ExamForm({ initialData }: ExamFormProps) {
       router.push('/admin/exams');
       router.refresh();
     } catch (error) {
+      console.error('Form submission error:', error);
       toast({
         title: 'خطا',
-        description: isEditing 
-          ? 'مشکلی در بروزرسانی اطلاعات آزمون رخ داده است.' 
-          : 'مشکلی در ایجاد آزمون جدید رخ داده است.',
+        description: error instanceof Error 
+          ? error.message 
+          : (isEditing 
+            ? 'مشکلی در بروزرسانی اطلاعات آزمون رخ داده است.' 
+            : 'مشکلی در ایجاد آزمون جدید رخ داده است.'),
         variant: 'destructive',
       });
     } finally {
@@ -162,11 +215,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
     }
   };
 
-  const updateSetting = <K extends keyof ExamSettings>(
-    key: K,
-    value: ExamSettings[K]
-  ) => {
-    setSettings(prev => ({...prev, [key]: value }));
+  const updateSetting = (key: keyof FormValues, value: any) => {
+    form.setValue(key, value);
   };
 
   const GuideItem = ({ text }: { text: string }) => (
@@ -180,23 +230,18 @@ export function ExamForm({ initialData }: ExamFormProps) {
     digitCount: 1,
     rowCount: 10,
     timeLimit: 60,
-    operators: [`+`,`-`],
+    operators: ['+', '-'],
     itemsPerRow: 2
   };
 
   const toggleOperator = (operator: Operator) => {
-    setSettings(prev => ({...prev,
-        operators: prev.operators.includes(operator)
-        ? prev.operators.filter(op => op !== operator)
-        : [...prev.operators, operator]
-        }));
+    const operators = form.watch('operators');
+    if (operators.includes(operator)) {
+      form.setValue('operators', operators.filter(op => op !== operator));
+    } else {
+      form.setValue('operators', [...operators, operator]);
+    }
   };
-
-  const [settings, setSettings] = useState<ExamSettings>(DEFAULT_SETTINGS);
-
-  interface ExamSettingsProps {
-    onStart: (settings: ExamSettings) => void;
-  }
 
   const LIMITS = {
     digitCount: { min: 1, max: 5 },
@@ -347,9 +392,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
                         onChange={(e) => {
                           const value = parseInt(e.toString());
                           field.onChange(value);
-                          updateSetting('timeLimit', value * 60);
                         }}
-                        min={LIMITS.timeLimit.min}
+                        min={1}
                         step={1}
                         className="w-full min-w-[120px]"
                       />
@@ -380,7 +424,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                                     <div key={op} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
                                         <CheckboxM
                                             id={`op-${op}`}
-                                            checked={settings.operators.includes(op)}
+                                            checked={form.watch('operators').includes(op)}
                                             onCheckedChange={() => toggleOperator(op)}
                                         />
                                         <Label
@@ -408,7 +452,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
             
 
             {/* جدول جمع/تفریق */}
-            {settings.operators.some(op => op === '+' || op === '-') && (
+            {form.watch('operators').some(op => op === '+' || op === '-') && (
               <AddSubQuestionsTable
                 questions={addSubQuestions}
                 setQuestions={setAddSubQuestions}
@@ -416,7 +460,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
               />
             )}
             {/* جدول ضرب/تقسیم */}
-            {settings.operators.some(op => op === '*' || op === '/') && (
+            {form.watch('operators').some(op => op === '*' || op === '/') && (
               <MulDivQuestionsTable
                 questions={mulDivQuestions}
                 setQuestions={setMulDivQuestions}

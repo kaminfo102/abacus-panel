@@ -51,9 +51,23 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
     redirect(`/student/exams/${exam.id}`);
   }
 
-  const answers = JSON.parse(result.answers);
-  const questions = exam.questionsJson ? JSON.parse(exam.questionsJson) : [];
-  const timeSpent = result.endTime && result.startTime ? Math.round((result.endTime.getTime() - result.startTime.getTime()) / 1000) : 0;
+  // Parse questions
+  const addSubQuestions = exam.addSubQuestions ? 
+    (typeof exam.addSubQuestions === 'string' ? JSON.parse(exam.addSubQuestions) : exam.addSubQuestions) 
+    : [];
+  const mulDivQuestions = exam.mulDivQuestions ? 
+    (typeof exam.mulDivQuestions === 'string' ? JSON.parse(exam.mulDivQuestions) : exam.mulDivQuestions) 
+    : [];
+
+  // Parse answers
+  const addSubAnswers = result.addSubAnswers ? 
+    (typeof result.addSubAnswers === 'string' ? JSON.parse(result.addSubAnswers) : result.addSubAnswers) 
+    : [];
+  const mulDivAnswers = result.mulDivAnswers ? 
+    (typeof result.mulDivAnswers === 'string' ? JSON.parse(result.mulDivAnswers) : result.mulDivAnswers) 
+    : [];
+
+  const timeSpent = result.timeSpent || 0;
 
   return (
     <DashboardLayout requiredRole="STUDENT">
@@ -73,7 +87,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>زمان صرف شده: {result.timeSpent} ثانیه</span>
+                <span>زمان صرف شده: {timeSpent} ثانیه</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -88,59 +102,50 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {Object.entries(answers)
-                  .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                  .map(([rowIndex, answer]: [string, any], displayIndex: number) => {
-                    const questionIndex = parseInt(rowIndex);
-                    const question = questions[questionIndex];
-                    if (!question) return null;
-                    
-                    return (
-                      <div key={rowIndex} className="p-4 border rounded-lg space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>سوال {displayIndex + 1}:</span>
-                          <div className="flex items-center gap-1">
-                            {question.items.map((item: any, index: number) => (
-                              <React.Fragment key={index}>
-                                {index > 0 && (
-                                  <span className="mx-1 text-blue-600 dark:text-blue-400">
-                                    {item.operator}
-                                  </span>
-                                )}
-                                <span>{item.value}</span>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <span className="text-sm font-medium">پاسخ شما: </span>
-                            <span className={answer.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                              {answer.value ?? 'پاسخ داده نشده'}
-                            </span>
-                          </div>
-                          {answer.submitted !== undefined && (
-                            <div>
-                              {answer.isCorrect ? (
-                                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                              ) : (
-                                <XCircle className="h-5 w-5 text-red-500" />
-                              )}
-                            </div>
-                          )}
-                        </div>
+                {addSubQuestions.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">جمع و تفریق</h3>
+                    {addSubQuestions.map((question: any, index: number) => (
+                      <div key={index} className="flex items-center gap-2">
+                        {addSubAnswers[index] === question.answer ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span>
+                          {question.question} = {addSubAnswers[index] || 'پاسخ داده نشده'}
+                        </span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                )}
+
+                {mulDivQuestions.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">ضرب و تقسیم</h3>
+                    {mulDivQuestions.map((question: any, index: number) => (
+                      <div key={index} className="flex items-center gap-2">
+                        {mulDivAnswers[index] === question.answer ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span>
+                          {question.question} = {mulDivAnswers[index] || 'پاسخ داده نشده'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="flex justify-end">
-          <Link href="/student/exams">
-            <Button>بازگشت به لیست آزمون‌ها</Button>
-          </Link>
+        <div className="flex justify-center">
+          <Button asChild>
+            <Link href="/student/exams">بازگشت به لیست آزمون‌ها</Link>
+          </Button>
         </div>
       </div>
     </DashboardLayout>

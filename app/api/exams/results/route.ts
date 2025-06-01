@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 import { db } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
@@ -8,10 +9,12 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 const examResultSchema = z.object({
   examId: z.string(),
   studentId: z.string(),
-  addSubAnswers: z.any().optional(),
-  mulDivAnswers: z.any().optional(),
+  addSubAnswers: z.array(z.union([z.string(), z.number()])).optional(),
+  mulDivAnswers: z.array(z.union([z.string(), z.number()])).optional(),
   timeSpent: z.number().optional(),
 });
+
+type ExamResultData = z.infer<typeof examResultSchema>;
 
 export async function POST(req: Request) {
   try {
@@ -29,19 +32,59 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 
-    // Create exam result
-    const data: any = {
-      examId: validatedData.examId,
-      studentId: validatedData.studentId,
-      addSubAnswers: validatedData.addSubAnswers ?? undefined,
-      mulDivAnswers: validatedData.mulDivAnswers ?? undefined,
-      endTime: new Date(),
-    };
-    if (validatedData.timeSpent !== undefined) {
-      data.timeSpent = validatedData.timeSpent;
+    // Get the exam to access questions
+    const exam = await db.exam.findUnique({
+      where: { id: validatedData.examId },
+    });
+
+    if (!exam) {
+      return new NextResponse('Exam not found', { status: 404 });
     }
+
+    // Calculate score
+    let totalScore = 0;
+
+    // Check add/sub answers
+    if (validatedData.addSubAnswers && exam.addSubQuestions) {
+      const addSubQuestions = typeof exam.addSubQuestions === 'string' 
+        ? JSON.parse(exam.addSubQuestions) 
+        : exam.addSubQuestions;
+      
+      addSubQuestions.forEach((question: { answer: number }, index: number) => {
+        const studentAnswer = validatedData.addSubAnswers?.[index];
+        if (studentAnswer !== undefined && Number(studentAnswer) === question.answer) {
+          totalScore += 1;
+        }
+      });
+    }
+
+    // Check mul/div answers
+    if (validatedData.mulDivAnswers && exam.mulDivQuestions) {
+      const mulDivQuestions = typeof exam.mulDivQuestions === 'string'
+        ? JSON.parse(exam.mulDivQuestions)
+        : exam.mulDivQuestions;
+      
+      mulDivQuestions.forEach((question: { answer: number }, index: number) => {
+        const studentAnswer = validatedData.mulDivAnswers?.[index];
+        if (studentAnswer !== undefined && Number(studentAnswer) === question.answer) {
+          totalScore += 1;
+        }
+      });
+    }
+
+    // Create exam result with proper typing
+    const examResultData: Prisma.ExamResultCreateInput = {
+      exam: { connect: { id: validatedData.examId } },
+      student: { connect: { id: validatedData.studentId } },
+      score: totalScore,
+      endTime: new Date(),
+      addSubAnswers: validatedData.addSubAnswers ? validatedData.addSubAnswers : undefined,
+      mulDivAnswers: validatedData.mulDivAnswers ? validatedData.mulDivAnswers : undefined,
+      timeSpent: validatedData.timeSpent,
+    };
+
     const result = await db.examResult.create({
-      data,
+      data: examResultData,
     });
 
     return NextResponse.json(result);

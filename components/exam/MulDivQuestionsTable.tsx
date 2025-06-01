@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Trash2 } from 'lucide-react';
 
 interface MulDivQuestion {
   numbers: number[];
@@ -47,32 +48,51 @@ export const MulDivQuestionsTable: React.FC<MulDivQuestionsTableProps> = ({ ques
 
   // تغییر مقدار عدد
   const handleNumberChange = (qIdx: number, nIdx: number, value: string) => {
-    const num = Number(value);
-    setQuestions(prev => prev.map((q, idx) => idx === qIdx ? {
-      ...q,
-      numbers: q.numbers.map((n, i) => i === nIdx ? num : n)
-    } : q));
+    const newQuestions = [...questions];
+    newQuestions[qIdx].numbers[nIdx] = parseInt(value) || 0;
+    newQuestions[qIdx].answer = calculateAnswer(newQuestions[qIdx]);
+    setQuestions(newQuestions);
   };
 
   // تغییر مقدار عملگر
   const handleOperatorChange = (qIdx: number, oIdx: number, value: string) => {
-    setQuestions(prev => prev.map((q, idx) => idx === qIdx ? {
-      ...q,
-      operators: q.operators.map((op, i) => i === oIdx ? (value as '×' | '÷') : op)
-    } : q));
+    const newQuestions = [...questions];
+    newQuestions[qIdx].operators[oIdx] = value as '×' | '÷';
+    newQuestions[qIdx].answer = calculateAnswer(newQuestions[qIdx]);
+    setQuestions(newQuestions);
   };
 
-  // تغییر مقدار جواب
-  const handleAnswerChange = (qIdx: number, value: string) => {
-    const num = value === '' ? '' : Number(value);
-    setQuestions(prev => prev.map((q, idx) => idx === qIdx ? { ...q, answer: num } : q));
+  const calculateAnswer = (question: MulDivQuestion): number => {
+    let result = question.numbers[0];
+    for (let i = 1; i < question.numbers.length; i++) {
+      const operator = question.operators[i - 1];
+      const number = question.numbers[i];
+      
+      if (operator === '×') {
+        result *= number;
+      } else if (operator === '÷') {
+        if (number === 0) return 0; // جلوگیری از تقسیم بر صفر
+        result = Math.floor(result / number);
+      }
+    }
+    return result;
   };
 
   return (
     <div className="overflow-x-auto mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-bold text-lg">سوالات ضرب و تقسیم</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAddQuestion}
+        >
+          افزودن سوال
+        </Button>
+      </div>
       <table className="min-w-full border border-gray-300 rounded-lg" dir="rtl">
         <thead>
-          <tr className="bg-primary/10">
+          <tr className="bg-violet-700 text-white">
             <th className="p-2 border">شماره</th>
             <th className="p-2 border">سوال</th>
             <th className="p-2 border">جواب</th>
@@ -82,7 +102,7 @@ export const MulDivQuestionsTable: React.FC<MulDivQuestionsTableProps> = ({ ques
         <tbody>
           {questions.map((q, qIdx) => (
             <tr key={qIdx}>
-              <td className="p-2 border text-center font-bold bg-orange-100">{qIdx + 1}</td>
+              <td className="p-2 border text-center font-bold bg-violet-700 text-white">{qIdx + 1}</td>
               <td className="p-2 border text-center">
                 <div className="flex flex-wrap items-center gap-2 justify-center">
                   {q.numbers.map((num, nIdx) => (
@@ -120,27 +140,21 @@ export const MulDivQuestionsTable: React.FC<MulDivQuestionsTableProps> = ({ ques
                 </div>
               </td>
               <td className="p-2 border text-center">
-                <Input
-                  type="number"
-                  value={q.answer}
-                  onChange={e => handleAnswerChange(qIdx, e.target.value)}
-                  className="w-24 mx-auto"
-                />
+                {q.answer}
               </td>
               <td className="p-2 border text-center">
-                <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveQuestion(qIdx)}>
-                  حذف سوال
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveQuestion(qIdx)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="mt-4 flex justify-end">
-        <Button type="button" onClick={handleAddQuestion} variant="default">
-          افزودن سوال جدید
-        </Button>
-      </div>
     </div>
   );
 }; 

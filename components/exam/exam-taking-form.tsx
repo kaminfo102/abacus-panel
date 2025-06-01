@@ -197,7 +197,6 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           </div>
         </CardContent>
       </Card>
-      <AbacusComponent />
     </div>
   );
 } 

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Trash2, Search, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -170,6 +170,14 @@ export function StudentTable({ students }: StudentTableProps) {
                   <TableCell className="text-right">{student.term}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => router.push(`/admin/students/${student.id}`)}
+                        className="hover:bg-primary/10"
+                      >
+                        <Eye className="h-4 w-4 text-blue-500" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

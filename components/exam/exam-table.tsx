@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   Table,
   TableBody,
@@ -23,8 +24,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, Trash2, Search, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { StudentAddSubTable } from './StudentAddSubTable';
+import { StudentMulDivTable } from './StudentMulDivTable';
 
 interface Exam {
   id: string;
@@ -35,6 +44,16 @@ interface Exam {
   timeLimit: number;
   operators: string;
   term: string;
+  addSubQuestions?: string | {
+    numbers: number[];
+    operators: ('+' | '-')[];
+    answer: number | '';
+  }[];
+  mulDivQuestions?: string | {
+    numbers: number[];
+    operators: ('×' | '÷')[];
+    answer: number | '';
+  }[];
 }
 
 interface ExamTableProps {
@@ -42,8 +61,10 @@ interface ExamTableProps {
 }
 
 export function ExamTable({ exams }: ExamTableProps) {
+  const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
+  const [examToPreview, setExamToPreview] = useState<Exam | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
@@ -69,6 +90,19 @@ export function ExamTable({ exams }: ExamTableProps) {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  const handlePreview = (exam: Exam) => {
+    const parsedExam = {
+      ...exam,
+      addSubQuestions: typeof exam.addSubQuestions === 'string' 
+        ? JSON.parse(exam.addSubQuestions)
+        : exam.addSubQuestions || [],
+      mulDivQuestions: typeof exam.mulDivQuestions === 'string'
+        ? JSON.parse(exam.mulDivQuestions)
+        : exam.mulDivQuestions || [],
+    };
+    setExamToPreview(parsedExam);
+  };
+
   const handleEdit = (examId: string) => {
     router.push(`/admin/exams/${examId}/edit`);
   };
@@ -77,12 +111,15 @@ export function ExamTable({ exams }: ExamTableProps) {
     if (!examToDelete) return;
 
     try {
+      console.log('Deleting exam:', examToDelete);
       const response = await fetch(`/api/exams/${examToDelete}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error('مشکلی در حذف آزمون رخ داده است');
+        const errorText = await response.text();
+        console.error('Delete error:', errorText);
+        throw new Error(errorText || 'مشکلی در حذف آزمون رخ داده است');
       }
 
       toast({
@@ -92,9 +129,12 @@ export function ExamTable({ exams }: ExamTableProps) {
 
       router.refresh();
     } catch (error) {
+      console.error('Delete error:', error);
       toast({
         title: 'خطا',
-        description: 'مشکلی در حذف آزمون رخ داده است.',
+        description: error instanceof Error 
+          ? error.message 
+          : 'مشکلی در حذف آزمون رخ داده است.',
         variant: 'destructive',
       });
     } finally {
@@ -178,6 +218,14 @@ export function ExamTable({ exams }: ExamTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => handlePreview(exam)}
+                        className="hover:bg-primary/10"
+                      >
+                        <Eye className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleEdit(exam.id)}
                         className="hover:bg-primary/10"
                       >
@@ -231,6 +279,36 @@ export function ExamTable({ exams }: ExamTableProps) {
           </TableFooter>
         </Table>
       </div>
+
+      <Dialog open={!!examToPreview} onOpenChange={(open) => !open && setExamToPreview(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-center">
+              پیش‌نمایش آزمون: {examToPreview?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {examToPreview?.operators.includes('+') || examToPreview?.operators.includes('-') ? (
+              <StudentAddSubTable
+                questions={Array.isArray(examToPreview.addSubQuestions) ? examToPreview.addSubQuestions : []}
+                answers={[]}
+                setAnswers={() => {}}
+                disabled={true}
+                showAnswers={session?.user?.role === 'ADMIN'}
+              />
+            ) : null}
+            {examToPreview?.operators.includes('*') || examToPreview?.operators.includes('/') ? (
+              <StudentMulDivTable
+                questions={Array.isArray(examToPreview.mulDivQuestions) ? examToPreview.mulDivQuestions : []}
+                answers={[]}
+                setAnswers={() => {}}
+                disabled={true}
+                showAnswers={session?.user?.role === 'ADMIN'}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!examToDelete} onOpenChange={(open) => !open && setExamToDelete(null)}>
         <AlertDialogContent className="sm:max-w-[425px]">

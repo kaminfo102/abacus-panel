@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 
 interface AddSubQuestion {
   numbers: number[];
+  operators: ('+' | '-')[];
   answer: number | '';
 }
 
@@ -11,9 +12,10 @@ interface StudentAddSubTableProps {
   answers: (string | number)[];
   setAnswers: React.Dispatch<React.SetStateAction<(string | number)[]>>;
   disabled?: boolean;
+  showAnswers?: boolean;
 }
 
-export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ questions, answers, setAnswers, disabled }) => {
+export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ questions, answers, setAnswers, disabled, showAnswers = false }) => {
   // پیدا کردن بیشترین تعداد عدد در بین سوالات برای تعیین تعداد ردیف‌ها
   const maxRows = Math.max(...questions.map(q => q.numbers.length), 0);
 
@@ -42,7 +44,14 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
               {rowIdx === 0 && <td className="p-2 border text-center align-middle bg-violet-700 text-white" rowSpan={maxRows}> </td>}
               {questions.map((q, colIdx) => (
                 <td key={colIdx} className="p-2 border text-center">
-                  {q.numbers[rowIdx] !== undefined ? q.numbers[rowIdx] : ''}
+                  {q.numbers[rowIdx] !== undefined ? (
+                    <>
+                      {rowIdx > 0 && q.operators && q.operators[rowIdx - 1] === '-' && (
+                        <span className="mr-1 text-red-500">-</span>
+                      )}
+                      {q.numbers[rowIdx]}
+                    </>
+                  ) : ''}
                 </td>
               ))}
             </tr>
@@ -50,15 +59,20 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
           {/* ردیف جواب */}
           <tr>
             <td className="p-2 border text-center font-bold bg-violet-700 text-white">جواب</td>
-            {questions.map((_, idx) => (
+            {questions.map((q, idx) => (
               <td key={idx} className="p-2 border text-center">
                 <Input
                   type="number"
                   value={answers[idx] ?? ''}
                   onChange={e => handleAnswerChange(idx, e.target.value)}
                   disabled={disabled}
-                  className="w-24 mx-auto"
+                  className="w-32 mx-auto"
                 />
+                {showAnswers && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    جواب: {q.answer}
+                  </div>
+                )}
               </td>
             ))}
           </tr>

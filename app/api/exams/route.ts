@@ -6,13 +6,15 @@ import { db } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 
 const examSchema = z.object({
-  title: z.string().min(2, 'عنوان باید حداقل 2 حرف باشد'),
-  digitCount: z.number().min(1, 'حداقل یک رقم باید وارد شود'),
-  rowCount: z.number().min(1, 'حداقل یک ردیف باید وارد شود'),
-  itemsPerRow: z.number().min(1, 'حداقل یک آیتم در هر ردیف باید وارد شود'),
-  timeLimit: z.number().min(30, 'حداقل زمان 30 ثانیه باید باشد'),
-  operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
-  term: z.string().min(1, 'انتخاب ترم الزامی است'),
+  title: z.string(),
+  digitCount: z.number(),
+  rowCount: z.number(),
+  itemsPerRow: z.number(),
+  timeLimit: z.number(),
+  operators: z.string(),
+  term: z.string(),
+  addSubQuestions: z.any().optional(),
+  mulDivQuestions: z.any().optional(),
 });
 
 // Helper functions for generating exam questions
@@ -61,9 +63,15 @@ export async function POST(req: Request) {
     // Create exam
     const exam = await db.exam.create({
       data: {
-        ...validatedData,
-        addSubQuestions: addSubQuestions ?? undefined,
-        mulDivQuestions: mulDivQuestions ?? undefined,
+        title: validatedData.title,
+        digitCount: validatedData.digitCount,
+        rowCount: validatedData.rowCount,
+        itemsPerRow: validatedData.itemsPerRow,
+        timeLimit: validatedData.timeLimit,
+        operators: validatedData.operators,
+        term: validatedData.term,
+        addSubQuestions: addSubQuestions || null,
+        mulDivQuestions: mulDivQuestions || null,
       },
     });
 
