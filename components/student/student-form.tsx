@@ -17,16 +17,58 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+
+const kurdistanCities = [
+  'سنندج',
+  'سقز',
+  'مریوان',
+  'بانه',
+  'کامیاران',
+  'دیواندره',
+  'بیجار',
+  'دهگلان',
+  'سروآباد',
+  'قروه',
+];
+
+const terms = [
+  'استارتر',
+  'ترم 1',
+  'ترم 2',
+  'ترم 3',
+  'ترم 4',
+  'ترم 5',
+  'ترم 6',
+  'ترم 7',
+  'ترم 8',
+  'ترم 9',
+  'ترم 10',
+  'ترم 11',
+  'ترم 12',
+  'ترم 13',
+  'ترم 14',
+  'ترم 15',
+  'ترم 16',
+  'ترم 17',
+  'ترم 18',
+];
 
 const studentSchema = z.object({
   firstName: z.string().min(2, 'نام باید حداقل ۲ کاراکتر باشد'),
   lastName: z.string().min(2, 'نام خانوادگی باید حداقل ۲ کاراکتر باشد'),
   nationalId: z.string().length(10, 'کد ملی باید ۱۰ رقم باشد'),
-  dateOfBirth: z.string().min(1, 'تاریخ تولد الزامی است'),
+  dateOfBirth: z.string().optional(),
   mobileNumber: z.string().length(11, 'شماره موبایل باید ۱۱ رقم باشد'),
-  city: z.string().min(2, 'شهر باید حداقل ۲ کاراکتر باشد'),
+  city: z.string().min(1, 'شهرستان الزامی است'),
   term: z.string().min(1, 'ترم الزامی است'),
 });
 
@@ -138,6 +180,20 @@ export function StudentForm({ student }: StudentFormProps) {
 
           <FormField
             control={form.control}
+            name="mobileNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>شماره تماس</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="dateOfBirth"
             render={({ field }) => (
               <FormItem>
@@ -152,27 +208,24 @@ export function StudentForm({ student }: StudentFormProps) {
 
           <FormField
             control={form.control}
-            name="mobileNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>شماره موبایل</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>شهر</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
+                <FormLabel>شهرستان</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="شهرستان را انتخاب کنید" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {kurdistanCities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -184,9 +237,20 @@ export function StudentForm({ student }: StudentFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>ترم</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="ترم را انتخاب کنید" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {terms.map((term) => (
+                      <SelectItem key={term} value={term}>
+                        {term}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

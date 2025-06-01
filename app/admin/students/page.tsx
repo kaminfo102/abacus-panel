@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StudentTable } from '@/components/student/student-table';
+import { StudentImport } from '@/components/student/student-import';
 
 export default async function Students() {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,9 @@ export default async function Students() {
   }
 
   const students = await db.student.findMany({
+    include: {
+      user: true,
+    },
     orderBy: {
       createdAt: 'desc',
     },
@@ -31,12 +35,15 @@ export default async function Students() {
               اضافه، ویرایش و حذف فراگیران سیستم
             </p>
           </div>
-          <Link href="/admin/students/new">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              افزودن دانش‌آموز
-            </Button>
-          </Link>
+          <div className="flex gap-4">
+            <StudentImport />
+            <Link href="/admin/students/new">
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                افزودن دانش‌آموز
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <StudentTable students={students} />
