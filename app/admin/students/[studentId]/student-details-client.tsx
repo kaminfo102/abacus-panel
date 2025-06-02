@@ -20,6 +20,7 @@ interface ExamResult {
   id: string;
   score: number;
   timeSpent: number;
+  endTime: string;
   exam: {
     id: string;
     title: string;
@@ -98,6 +99,7 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
                       <TableHead className="text-right">عنوان آزمون</TableHead>
                       <TableHead className="text-right">امتیاز</TableHead>
                       <TableHead className="text-right">زمان صرف شده (ثانیه)</TableHead>
+                      <TableHead className="text-right">تاریخ و ساعت</TableHead>
                       <TableHead className="text-right">عملیات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -107,6 +109,15 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
                         <TableCell className="text-right font-medium">{result.exam.title}</TableCell>
                         <TableCell className="text-right">{result.score}</TableCell>
                         <TableCell className="text-right">{result.timeSpent}</TableCell>
+                        <TableCell className="text-right">
+                          {new Date(result.endTime).toLocaleString('fa-IR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

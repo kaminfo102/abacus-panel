@@ -88,6 +88,20 @@ export async function GET(req: Request) {
       orderBy: {
         createdAt: 'desc',
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        nationalId: true,
+        mobileNumber: true,
+        city: true,
+        term: true,
+        _count: {
+          select: {
+            examResults: true
+          }
+        }
+      }
     });
 
     return NextResponse.json(students);

@@ -42,6 +42,9 @@ interface Student {
   mobileNumber: string;
   city: string;
   term: string;
+  _count?: {
+    examResults: number;
+  };
 }
 
 interface StudentTableProps {
@@ -186,20 +189,8 @@ export function StudentTable({ students }: StudentTableProps) {
               <TableHead className="text-right hidden sm:table-cell">کد ملی</TableHead>
               <TableHead className="text-right hidden md:table-cell">شماره موبایل</TableHead>
               <TableHead className="text-right hidden lg:table-cell">شهرستان</TableHead>
-              <TableHead className="text-right">
-                <Button
-                  variant="ghost"
-                  onClick={handleSort}
-                  className="flex items-center gap-1"
-                >
-                  ترم
-                  {sortOrder === 'asc' ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </TableHead>
+              <TableHead className="text-right">ترم</TableHead>
+              <TableHead className="text-right">تعداد آزمون</TableHead>
               <TableHead className="text-right w-[120px]">عملیات</TableHead>
             </TableRow>
           </TableHeader>
@@ -235,6 +226,7 @@ export function StudentTable({ students }: StudentTableProps) {
                   <TableCell className="text-right hidden md:table-cell">{student.mobileNumber}</TableCell>
                   <TableCell className="text-right hidden lg:table-cell">{student.city}</TableCell>
                   <TableCell className="text-right">{student.term}</TableCell>
+                  <TableCell className="text-right">{student._count?.examResults || 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1 sm:gap-2">
                       <Button
