@@ -9,6 +9,22 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 
+interface Exam {
+  id: string;
+  title: string;
+  digitCount: number;
+  timeLimit: number;
+  isActive: boolean;
+  term: string;
+  createdAt: Date;
+  updatedAt: Date;
+  rowCount: number;
+  itemsPerRow: number;
+  operators: string;
+  addSubQuestions: any;
+  mulDivQuestions: any;
+}
+
 export default async function StudentDashboard() {
   const session = await getServerSession(authOptions);
 
@@ -31,13 +47,9 @@ export default async function StudentDashboard() {
   });
 
   const latestExam = await db.exam.findFirst({
-    where: {
-      term: student.term,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+    where: { term: student.term },
+    orderBy: { createdAt: 'desc' },
+  }) as Exam | null;
 
   return (
     <DashboardLayout requiredRole="STUDENT">
@@ -70,10 +82,12 @@ export default async function StudentDashboard() {
         </div>
 
         {latestExam && (
-          <Card className="animate-pulse border-2 border-red-500 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
+          <Card className={`animate-pulse border-2 ${latestExam.isActive ? 'border-red-500 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20' : 'border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20'}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-lg font-bold text-red-600 dark:text-red-400">آزمون جدید</CardTitle>
-              <Calculator className="h-6 w-6 text-red-500" />
+              <CardTitle className={`text-lg font-bold ${latestExam.isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                {latestExam.isActive ? 'آزمون جدید' : 'آزمون غیرفعال'}
+              </CardTitle>
+              <Calculator className={`h-6 w-6 ${latestExam.isActive ? 'text-red-500' : 'text-gray-500'}`} />
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">{latestExam.title}</div>
@@ -87,12 +101,24 @@ export default async function StudentDashboard() {
                   <span>تعداد ارقام: {latestExam.digitCount}</span>
                 </div>
               </div>
-              <Link href={`/student/exams/${latestExam.id}`} className="block">
-                <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                  <Play className="h-5 w-5 ml-2" />
-                  شروع آزمون
-                </Button>
-              </Link>
+              {latestExam.isActive ? (
+                <Link href={`/student/exams/${latestExam.id}`} className="block">
+                  <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Play className="h-5 w-5 ml-2" />
+                    شروع آزمون
+                  </Button>
+                </Link>
+              ) : (
+                <div className="cursor-not-allowed">
+                  <Button 
+                    className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
+                    disabled
+                  >
+                    <AlertCircle className="h-5 w-5 ml-2" />
+                    آزمون غیرفعال است
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

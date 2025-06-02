@@ -19,6 +19,21 @@ export async function GET() {
   const latestExam = await db.exam.findFirst({
     where: { term: student.term },
     orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      digitCount: true,
+      timeLimit: true,
+      isActive: true,
+      term: true,
+      createdAt: true,
+      updatedAt: true,
+      rowCount: true,
+      itemsPerRow: true,
+      operators: true,
+      addSubQuestions: true,
+      mulDivQuestions: true,
+    },
   });
 
   return NextResponse.json(latestExam);
