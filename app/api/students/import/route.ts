@@ -85,7 +85,7 @@ export async function POST(req: Request) {
                   lastName: studentData.lastName,
                   nationalId: studentData.nationalId,
                   mobileNumber: studentData.mobileNumber,
-                  dateOfBirth: studentData.dateOfBirth,
+                  dateOfBirth: studentData.dateOfBirth || '',
                   city: studentData.city,
                   term: studentData.term,
                 },
