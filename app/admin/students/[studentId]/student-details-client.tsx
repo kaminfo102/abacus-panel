@@ -15,15 +15,20 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle } from 'lucide-react';
 
 interface ExamResult {
   id: string;
   score: number;
   timeSpent: number;
   endTime: string;
+  addSubAnswers: any[];
+  mulDivAnswers: any[];
   exam: {
     id: string;
     title: string;
+    addSubQuestions: any[];
+    mulDivQuestions: any[];
   };
 }
 
@@ -43,6 +48,7 @@ interface StudentDetailsClientProps {
 export function StudentDetailsClient({ student, examResults }: StudentDetailsClientProps) {
   const router = useRouter();
   const [deletingResultId, setDeletingResultId] = useState<string | null>(null);
+  const [selectedResult, setSelectedResult] = useState<ExamResult | null>(null);
 
   const handleDeleteResult = async (resultId: string) => {
     setDeletingResultId(resultId);
@@ -61,7 +67,7 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
         description: 'نتیجه آزمون با موفقیت حذف شد.',
       });
 
-      router.refresh(); // Refresh the page to show updated results
+      router.refresh();
     } catch (error) {
       console.error('Delete result error:', error);
       toast({
@@ -76,13 +82,17 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
     }
   };
 
+  const handleViewResult = (result: ExamResult) => {
+    setSelectedResult(result);
+  };
+
   return (
     <DashboardLayout requiredRole="ADMIN">
       <div className="page-transition space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">جزئیات فراگیر: {student.firstName} {student.lastName}</h1>
           <p className="text-muted-foreground">
-            کد ملی: {student.nationalId} | ترم: {student.term}
+            کد ملی: {student.nationalId} | ترم: {student.term} | تعداد کل آزمون‌ها: {examResults.length}
           </p>
         </div>
 
@@ -106,7 +116,15 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
                   <TableBody>
                     {examResults.map((result) => (
                       <TableRow key={result.id}>
-                        <TableCell className="text-right font-medium">{result.exam.title}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-medium"
+                            onClick={() => handleViewResult(result)}
+                          >
+                            {result.exam.title}
+                          </Button>
+                        </TableCell>
                         <TableCell className="text-right">{result.score}</TableCell>
                         <TableCell className="text-right">{result.timeSpent}</TableCell>
                         <TableCell className="text-right">
@@ -137,6 +155,101 @@ export function StudentDetailsClient({ student, examResults }: StudentDetailsCli
             )}
           </CardContent>
         </Card>
+
+        {selectedResult && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">نتیجه آزمون {selectedResult.exam.title}</h2>
+                <Button variant="outline" onClick={() => setSelectedResult(null)}>بستن</Button>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>زمان صرف شده: {selectedResult.timeSpent} ثانیه</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <span>نمره: {selectedResult.score}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="space-y-4">
+                      {selectedResult.exam.addSubQuestions?.length > 0 && (
+                        <div className="space-y-4">
+                          <h3 className="font-semibold">جمع و تفریق</h3>
+                          {selectedResult.exam.addSubQuestions.map((question: any, index: number) => {
+                            const studentAnswer = selectedResult.addSubAnswers?.[index];
+                            const isCorrect = studentAnswer !== undefined && 
+                              studentAnswer !== '' && 
+                              Number(studentAnswer) === Number(question.answer);
+                            
+                            return (
+                              <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                {isCorrect ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                <div className="flex-1">
+                                  <div className="font-medium">{question.question}</div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                                    {!isCorrect && studentAnswer !== '' && (
+                                      <span className="mr-2"> | پاسخ صحیح: {question.answer}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {selectedResult.exam.mulDivQuestions?.length > 0 && (
+                        <div className="space-y-4">
+                          <h3 className="font-semibold">ضرب و تقسیم</h3>
+                          {selectedResult.exam.mulDivQuestions.map((question: any, index: number) => {
+                            const studentAnswer = selectedResult.mulDivAnswers?.[index];
+                            const isCorrect = studentAnswer !== undefined && 
+                              studentAnswer !== '' && 
+                              Number(studentAnswer) === Number(question.answer);
+                            
+                            return (
+                              <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                {isCorrect ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                <div className="flex-1">
+                                  <div className="font-medium">{question.question}</div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                                    {!isCorrect && studentAnswer !== '' && (
+                                      <span className="mr-2"> | پاسخ صحیح: {question.answer}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

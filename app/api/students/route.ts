@@ -84,27 +84,64 @@ export async function GET(req: Request) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 
+    // Get all students with their exam results
     const students = await db.student.findMany({
       orderBy: {
         createdAt: 'desc',
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        nationalId: true,
-        mobileNumber: true,
-        city: true,
-        term: true,
-        _count: {
-          select: {
-            examResults: true
+      include: {
+        examResults: {
+          include: {
+            exam: {
+              select: {
+                id: true,
+                title: true
+              }
+            }
           }
         }
       }
     });
 
-    return NextResponse.json(students);
+    // Log raw data for debugging
+    console.log('Raw students data from database:', JSON.stringify(students.map(s => ({
+      id: s.id,
+      name: `${s.firstName} ${s.lastName}`,
+      examResultsCount: s.examResults.length,
+      examResults: s.examResults.map(er => ({
+        id: er.id,
+        score: er.score,
+        examId: er.examId,
+        examTitle: er.exam.title
+      }))
+    })), null, 2));
+
+    // Transform the data
+    const formattedStudents = students.map(student => ({
+      id: student.id,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      nationalId: student.nationalId,
+      mobileNumber: student.mobileNumber,
+      city: student.city,
+      term: student.term,
+      examResults: student.examResults.map(er => ({
+        id: er.id,
+        score: er.score,
+        examId: er.examId,
+        examTitle: er.exam.title
+      }))
+    }));
+
+    // Log formatted data for debugging
+    console.log('Formatted students data for response:', JSON.stringify(formattedStudents.map(s => ({
+      id: s.id,
+      name: `${s.firstName} ${s.lastName}`,
+      examResultsCount: s.examResults.length,
+      examResults: s.examResults
+    })), null, 2));
+
+    return NextResponse.json(formattedStudents);
   } catch (error) {
     console.error('[STUDENTS_GET]', error);
     return new NextResponse('Internal error', { status: 500 });

@@ -37,7 +37,14 @@ export default async function StudentDetailsPage({ params }: StudentDetailsPageP
       studentId: params.studentId,
     },
     include: {
-      exam: true, // Include exam details with results
+      exam: {
+        select: {
+          id: true,
+          title: true,
+          addSubQuestions: true,
+          mulDivQuestions: true,
+        }
+      }
     },
     orderBy: {
       createdAt: 'desc',
@@ -52,7 +59,7 @@ export default async function StudentDetailsPage({ params }: StudentDetailsPageP
     return value;
   }));
 
-   const resultsData = JSON.parse(JSON.stringify(examResults, (key, value) => {
+  const resultsData = JSON.parse(JSON.stringify(examResults, (key, value) => {
     if (typeof value === 'object' && value !== null && value.d) {
       return value.toString();
     }

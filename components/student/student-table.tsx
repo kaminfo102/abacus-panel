@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Table,
@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Search, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Pencil, Trash2, Search, ChevronUp, ChevronDown, Eye, CheckCircle2, XCircle } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -42,9 +42,13 @@ interface Student {
   mobileNumber: string;
   city: string;
   term: string;
-  _count?: {
-    examResults: number;
-  };
+  examResults: {
+    id: string;
+    score: number;
+    examId: string;
+    examTitle: string;
+  }[];
+  examResultsCount: number;
 }
 
 interface StudentTableProps {
@@ -67,6 +71,10 @@ export function StudentTable({ students }: StudentTableProps) {
   const [pageSize, setPageSize] = useState('10');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
+
+  useEffect(() => {
+    console.log('Raw students data in table:', JSON.stringify(students, null, 2));
+  }, [students]);
 
   const filteredStudents = students
     .filter((student) => {
@@ -115,7 +123,7 @@ export function StudentTable({ students }: StudentTableProps) {
 
   const handlePageSizeChange = (value: string) => {
     setPageSize(value);
-    setCurrentPage(1); // Reset to first page when changing page size
+    setCurrentPage(1);
   };
 
   const handleDelete = async (studentIds: string[]) => {
@@ -202,61 +210,81 @@ export function StudentTable({ students }: StudentTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedStudents.map((student, index) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedStudents.includes(student.id)}
-                      onCheckedChange={(checked) => handleSelectStudent(student.id, checked as boolean)}
-                      aria-label={`انتخاب ${student.firstName} ${student.lastName}`}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {startIndex + index + 1}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    <div className="flex flex-col">
-                      <span>{student.firstName} {student.lastName}</span>
-                      <span className="text-xs text-muted-foreground sm:hidden">
-                        {student.nationalId}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right hidden sm:table-cell">{student.nationalId}</TableCell>
-                  <TableCell className="text-right hidden md:table-cell">{student.mobileNumber}</TableCell>
-                  <TableCell className="text-right hidden lg:table-cell">{student.city}</TableCell>
-                  <TableCell className="text-right">{student.term}</TableCell>
-                  <TableCell className="text-right">{student._count?.examResults || 0}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1 sm:gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/admin/students/${student.id}`)}
-                        className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
-                      >
-                        <Eye className="h-4 w-4 text-blue-500" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(student.id)}
-                        className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
-                      >
-                        <Pencil className="h-4 w-4 text-primary" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setStudentToDelete(student.id)}
-                        className="hover:bg-destructive/10 h-8 w-8 sm:h-9 sm:w-9"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedStudents.map((student, index) => {
+                const examResults = Array.isArray(student.examResults) ? student.examResults : [];
+                const examCount = examResults.length;
+                const hasExams = examCount > 0;
+
+                return (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedStudents.includes(student.id)}
+                        onCheckedChange={(checked) => handleSelectStudent(student.id, checked as boolean)}
+                        aria-label={`انتخاب ${student.firstName} ${student.lastName}`}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {startIndex + index + 1}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      <div className="flex flex-col">
+                        <span>{student.firstName} {student.lastName}</span>
+                        <span className="text-xs text-muted-foreground sm:hidden">
+                          {student.nationalId}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right hidden sm:table-cell">{student.nationalId}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{student.mobileNumber}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{student.city}</TableCell>
+                    <TableCell className="text-right">{student.term}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-center">
+                        {hasExams ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <span className="text-sm">شرکت کرده ({examCount})</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <XCircle className="h-5 w-5 text-red-500" />
+                            <span className="text-sm">شرکت نکرده</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => router.push(`/admin/students/${student.id}`)}
+                          className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
+                        >
+                          <Eye className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(student.id)}
+                          className="hover:bg-primary/10 h-8 w-8 sm:h-9 sm:w-9"
+                        >
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setStudentToDelete(student.id)}
+                          className="hover:bg-destructive/10 h-8 w-8 sm:h-9 sm:w-9"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
           <TableFooter>

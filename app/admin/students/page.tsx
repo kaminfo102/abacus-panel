@@ -9,21 +9,48 @@ import { Plus } from 'lucide-react';
 import { StudentTable } from '@/components/student/student-table';
 import { StudentImport } from '@/components/student/student-import';
 
-export default async function Students() {
+export default async function StudentsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || session.user.role !== 'ADMIN') {
-    redirect('/');
+    return null;
   }
 
+  // Get all students with their exam results
   const students = await db.student.findMany({
-    include: {
-      user: true,
-    },
     orderBy: {
       createdAt: 'desc',
     },
+    include: {
+      examResults: {
+        include: {
+          exam: {
+            select: {
+              id: true,
+              title: true
+            }
+          }
+        }
+      }
+    }
   });
+
+  // Transform the data
+  const formattedStudents = students.map(student => ({
+    id: student.id,
+    firstName: student.firstName,
+    lastName: student.lastName,
+    nationalId: student.nationalId,
+    mobileNumber: student.mobileNumber,
+    city: student.city,
+    term: student.term,
+    examResults: student.examResults.map(er => ({
+      id: er.id,
+      score: er.score,
+      examId: er.examId,
+      examTitle: er.exam.title
+    }))
+  }));
 
   return (
     <DashboardLayout requiredRole="ADMIN">
@@ -46,7 +73,7 @@ export default async function Students() {
           </div>
         </div>
 
-        <StudentTable students={students} />
+        <StudentTable students={formattedStudents} />
       </div>
     </DashboardLayout>
   );
