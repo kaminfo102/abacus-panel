@@ -105,36 +105,62 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
                 {addSubQuestions.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold">جمع و تفریق</h3>
-                    {addSubQuestions.map((question: any, index: number) => (
-                      <div key={index} className="flex items-center gap-2">
-                        {addSubAnswers[index] === question.answer ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span>
-                          {question.question} = {addSubAnswers[index] || 'پاسخ داده نشده'}
-                        </span>
-                      </div>
-                    ))}
+                    {addSubQuestions.map((question: any, index: number) => {
+                      const studentAnswer = addSubAnswers[index];
+                      const isCorrect = studentAnswer !== undefined && 
+                        studentAnswer !== '' && 
+                        Number(studentAnswer) === Number(question.answer);
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                          {isCorrect ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium">{question.question}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                              {!isCorrect && studentAnswer !== '' && (
+                                <span className="mr-2"> | پاسخ صحیح: {question.answer}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {mulDivQuestions.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold">ضرب و تقسیم</h3>
-                    {mulDivQuestions.map((question: any, index: number) => (
-                      <div key={index} className="flex items-center gap-2">
-                        {mulDivAnswers[index] === question.answer ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span>
-                          {question.question} = {mulDivAnswers[index] || 'پاسخ داده نشده'}
-                        </span>
-                      </div>
-                    ))}
+                    {mulDivQuestions.map((question: any, index: number) => {
+                      const studentAnswer = mulDivAnswers[index];
+                      const isCorrect = studentAnswer !== undefined && 
+                        studentAnswer !== '' && 
+                        Number(studentAnswer) === Number(question.answer);
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                          {isCorrect ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium">{question.question}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                              {!isCorrect && studentAnswer !== '' && (
+                                <span className="mr-2"> | پاسخ صحیح: {question.answer}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -124,16 +124,22 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           timeSpent: finalTimeSpent,
         }),
       });
+
       if (response.status === 409) {
-        toast({
-          title: 'توجه',
-          description: 'شما قبلاً نتیجه این آزمون را ثبت کرده‌اید.',
-          variant: 'destructive',
-        });
+        // Only show the "already submitted" message if it's not an auto-finish
+        if (!autoFinish) {
+          toast({
+            title: 'توجه',
+            description: 'شما قبلاً نتیجه این آزمون را ثبت کرده‌اید.',
+            variant: 'destructive',
+          });
+        }
         router.push(`/student/exams/${exam.id}/result`);
         return;
       }
+
       if (!response.ok) throw new Error();
+
       toast({
         title: autoFinish ? 'زمان آزمون به پایان رسید' : 'آزمون با موفقیت ثبت شد',
         description: autoFinish

@@ -43,6 +43,7 @@ export async function POST(req: Request) {
 
     // Calculate score
     let totalScore = 0;
+    let totalQuestions = 0;
 
     // Check add/sub answers
     if (validatedData.addSubAnswers && exam.addSubQuestions) {
@@ -52,8 +53,13 @@ export async function POST(req: Request) {
       
       addSubQuestions.forEach((question: { answer: number }, index: number) => {
         const studentAnswer = validatedData.addSubAnswers?.[index];
-        if (studentAnswer !== undefined && Number(studentAnswer) === question.answer) {
-          totalScore += 1;
+        totalQuestions++;
+        if (studentAnswer !== undefined && studentAnswer !== '') {
+          const normalizedStudentAnswer = Number(studentAnswer);
+          const normalizedCorrectAnswer = Number(question.answer);
+          if (!isNaN(normalizedStudentAnswer) && normalizedStudentAnswer === normalizedCorrectAnswer) {
+            totalScore += 1;
+          }
         }
       });
     }
@@ -66,8 +72,13 @@ export async function POST(req: Request) {
       
       mulDivQuestions.forEach((question: { answer: number }, index: number) => {
         const studentAnswer = validatedData.mulDivAnswers?.[index];
-        if (studentAnswer !== undefined && Number(studentAnswer) === question.answer) {
-          totalScore += 1;
+        totalQuestions++;
+        if (studentAnswer !== undefined && studentAnswer !== '') {
+          const normalizedStudentAnswer = Number(studentAnswer);
+          const normalizedCorrectAnswer = Number(question.answer);
+          if (!isNaN(normalizedStudentAnswer) && normalizedStudentAnswer === normalizedCorrectAnswer) {
+            totalScore += 1;
+          }
         }
       });
     }
