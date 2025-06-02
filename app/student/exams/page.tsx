@@ -4,9 +4,25 @@ import { db } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Calculator, Grid, CheckCircle2 } from 'lucide-react';
+import { Clock, Calculator, Grid, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+
+interface ExamWithActive {
+  id: string;
+  title: string;
+  digitCount: number;
+  rowCount: number;
+  itemsPerRow: number;
+  timeLimit: number;
+  operators: string;
+  term: string;
+  isActive: boolean;
+  addSubQuestions: any;
+  mulDivQuestions: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export default async function StudentExams() {
   const session = await getServerSession(authOptions);
@@ -30,7 +46,7 @@ export default async function StudentExams() {
     orderBy: {
       createdAt: 'desc',
     },
-  });
+  }) as ExamWithActive[];
 
   // Get exam results for the student
   const examResults = await db.examResult.findMany({
@@ -60,6 +76,7 @@ export default async function StudentExams() {
             {exams.map((exam, index) => {
               const result = examResults.find(r => r.examId === exam.id);
               const hasTaken = !!result;
+              const canAccess = exam.isActive || hasTaken;
 
               return (
                 <Card key={exam.id} className={`animate-fade-in delay-${index * 100}`}>
@@ -90,13 +107,31 @@ export default async function StudentExams() {
                             <span className="text-sm">نمره: {result.score}</span>
                           </div>
                         )}
+                        {!exam.isActive && (
+                          <div className="flex items-center gap-2 text-amber-600">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="text-sm">این آزمون در حال حاضر غیرفعال است</span>
+                          </div>
+                        )}
                       </div>
 
-                      <Link href={hasTaken ? `/student/exams/${exam.id}/result` : `/student/exams/${exam.id}`}>
-                        <Button className="w-full">
-                          {hasTaken ? 'مشاهده نتیجه' : 'شروع آزمون'}
+                      {canAccess ? (
+                        <Link href={hasTaken ? `/student/exams/${exam.id}/result` : `/student/exams/${exam.id}`}>
+                          <Button 
+                            className="w-full" 
+                            disabled={!exam.isActive && !hasTaken}
+                          >
+                            {hasTaken ? 'مشاهده نتیجه' : 'شروع آزمون'}
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button 
+                          className="w-full" 
+                          disabled={true}
+                        >
+                          شروع آزمون
                         </Button>
-                      </Link>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

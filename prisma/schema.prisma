@@ -64,6 +64,7 @@ model Exam {
   timeLimit    Int      // in seconds
   operators    String   // e.g. "+,-,*"
   term         String   // student term
+  isActive     Boolean  @default(true)
   addSubQuestions Json?
   mulDivQuestions Json?
   students     Student[] @relation("StudentExams")

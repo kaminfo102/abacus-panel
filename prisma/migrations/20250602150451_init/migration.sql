@@ -53,13 +53,11 @@ CREATE TABLE "exams" (
     "timeLimit" INTEGER NOT NULL,
     "operators" TEXT NOT NULL,
     "term" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "addSubQuestions" JSONB,
     "mulDivQuestions" JSONB,
-    "questions" JSONB,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "teacherId" TEXT NOT NULL,
-    CONSTRAINT "exams_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "Teacher" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
@@ -79,13 +77,7 @@ CREATE TABLE "exam_results" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "examId" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
-    "score" REAL NOT NULL,
-    "addSubScore" REAL NOT NULL,
-    "mulDivScore" REAL NOT NULL,
-    "totalQuestions" INTEGER NOT NULL,
-    "correctAnswers" INTEGER NOT NULL,
-    "addSubCorrect" INTEGER NOT NULL,
-    "mulDivCorrect" INTEGER NOT NULL,
+    "score" INTEGER NOT NULL,
     "addSubAnswers" JSONB,
     "mulDivAnswers" JSONB,
     "startTime" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -95,29 +87,6 @@ CREATE TABLE "exam_results" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "exam_results_examId_fkey" FOREIGN KEY ("examId") REFERENCES "exams" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "exam_results_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateTable
-CREATE TABLE "ExamProgress" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "examId" TEXT NOT NULL,
-    "studentId" TEXT NOT NULL,
-    "addSubAnswers" JSONB NOT NULL,
-    "mulDivAnswers" JSONB NOT NULL,
-    "timeLeft" INTEGER NOT NULL,
-    "timeSpent" INTEGER NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "ExamProgress_examId_fkey" FOREIGN KEY ("examId") REFERENCES "exams" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ExamProgress_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateTable
-CREATE TABLE "Teacher" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    CONSTRAINT "Teacher_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -138,25 +107,10 @@ CREATE UNIQUE INDEX "Student_nationalId_key" ON "Student"("nationalId");
 CREATE UNIQUE INDEX "Student_userId_key" ON "Student"("userId");
 
 -- CreateIndex
-CREATE INDEX "exams_teacherId_idx" ON "exams"("teacherId");
-
--- CreateIndex
 CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "exam_results_examId_studentId_key" ON "exam_results"("examId", "studentId");
-
--- CreateIndex
-CREATE INDEX "ExamProgress_examId_idx" ON "ExamProgress"("examId");
-
--- CreateIndex
-CREATE INDEX "ExamProgress_studentId_idx" ON "ExamProgress"("studentId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "ExamProgress_examId_studentId_key" ON "ExamProgress"("examId", "studentId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Teacher_userId_key" ON "Teacher"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_StudentExams_AB_unique" ON "_StudentExams"("A", "B");

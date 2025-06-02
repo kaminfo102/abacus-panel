@@ -44,6 +44,7 @@ interface Exam {
   timeLimit: number;
   operators: string;
   term: string;
+  isActive: boolean;
   addSubQuestions?: string | {
     numbers: number[];
     operators: ('+' | '-')[];
@@ -142,6 +143,34 @@ export function ExamTable({ exams }: ExamTableProps) {
     }
   };
 
+  const handleToggleActive = async (examId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/exams/${examId}/toggle`, {
+        method: 'PATCH',
+      });
+
+      if (!response.ok) {
+        throw new Error('مشکلی در تغییر وضعیت آزمون رخ داده است');
+      }
+
+      toast({
+        title: 'موفقیت‌آمیز',
+        description: `آزمون با موفقیت ${currentStatus ? 'غیرفعال' : 'فعال'} شد.`,
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('Toggle error:', error);
+      toast({
+        title: 'خطا',
+        description: error instanceof Error 
+          ? error.message 
+          : 'مشکلی در تغییر وضعیت آزمون رخ داده است.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center">
@@ -182,13 +211,14 @@ export function ExamTable({ exams }: ExamTableProps) {
                   )}
                 </Button>
               </TableHead>
+              <TableHead className="text-right">وضعیت</TableHead>
               <TableHead className="text-right">عملیات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedExams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">
+                <TableCell colSpan={10} className="text-center">
                   آزمونی یافت نشد
                 </TableCell>
               </TableRow>
@@ -213,6 +243,16 @@ export function ExamTable({ exams }: ExamTableProps) {
                   <TableCell className="text-right hidden sm:table-cell">{exam.timeLimit}</TableCell>
                   <TableCell className="text-right hidden sm:table-cell">{exam.operators}</TableCell>
                   <TableCell className="text-right">{exam.term}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant={exam.isActive ? "default" : "secondary"}
+                      size="sm"
+                      onClick={() => handleToggleActive(exam.id, exam.isActive)}
+                      className="w-24"
+                    >
+                      {exam.isActive ? 'فعال' : 'غیرفعال'}
+                    </Button>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
@@ -247,7 +287,7 @@ export function ExamTable({ exams }: ExamTableProps) {
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={9} className="text-right">
+              <TableCell colSpan={10} className="text-right">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Button
