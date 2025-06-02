@@ -79,8 +79,8 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   const [timeLeft, setTimeLeft] = useState(exam.timeLimit);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const router = useRouter();
-  const [startTime] = useState(Date.now());
   const [timeSpent, setTimeSpent] = useState(0);
   const [isAutoFinished, setIsAutoFinished] = useState(false);
 
@@ -95,23 +95,54 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           setIsAutoFinished(true);
-          handleFinishExam(true);
+          console.log('Time ended - Current answers:', { addSubAnswers, mulDivAnswers });
+          // Ensure we capture the latest state before finishing
+          const currentAnswers = {
+            addSub: [...addSubAnswers],
+            mulDiv: [...mulDivAnswers]
+          };
+          handleFinishExam(true, currentAnswers);
           return 0;
         }
         return prev - 1;
       });
-      setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
+      const currentTime = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setTimeSpent(currentTime);
     }, 1000);
-    return () => clearInterval(timerRef.current!);
-  }, [finished, startTime]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [finished, addSubAnswers, mulDivAnswers]);
 
   // ثبت آزمون
-  const handleFinishExam = async (autoFinish = false) => {
+  const handleFinishExam = async (
+    autoFinish = false, 
+    currentAnswers?: { addSub: (string | number)[], mulDiv: (string | number)[] }
+  ) => {
     if (isLoading || finished) return;
+    console.log('Finishing exam - Answers:', { addSubAnswers, mulDivAnswers });
+    console.log('Current answers if provided:', currentAnswers);
+    
     setIsLoading(true);
     setFinished(true);
-    clearInterval(timerRef.current!);
-    const finalTimeSpent = Math.floor((Date.now() - startTime) / 1000);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    // Calculate final time spent
+    const finalTimeSpent = autoFinish ? exam.timeLimit : Math.floor((Date.now() - startTimeRef.current) / 1000);
+
+    // Use provided answers if available (for auto-finish) or current state
+    const answersToSubmit = {
+      addSub: currentAnswers?.addSub || addSubAnswers,
+      mulDiv: currentAnswers?.mulDiv || mulDivAnswers
+    };
+
+    console.log('Submitting answers:', answersToSubmit);
+    console.log('Time spent:', finalTimeSpent);
+
     try {
       const response = await fetch('/api/exams/results', {
         method: 'POST',
@@ -119,14 +150,13 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         body: JSON.stringify({
           examId: exam.id,
           studentId: student.id,
-          addSubAnswers,
-          mulDivAnswers,
+          addSubAnswers: answersToSubmit.addSub,
+          mulDivAnswers: answersToSubmit.mulDiv,
           timeSpent: finalTimeSpent,
         }),
       });
 
       if (response.status === 409) {
-        // Only show the "already submitted" message if it's not an auto-finish
         if (!autoFinish) {
           toast({
             title: 'توجه',
@@ -148,6 +178,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
       });
       router.push(`/student/exams/${exam.id}/result`);
     } catch (error) {
+      console.error('Error submitting exam:', error);
       toast({
         title: 'خطا',
         description: 'مشکلی در ثبت آزمون رخ داده است.',

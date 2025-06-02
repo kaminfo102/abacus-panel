@@ -83,11 +83,14 @@ export async function POST(req: Request) {
       });
     }
 
+    // Calculate percentage score (out of 100)
+    const percentageScore = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
+
     // Create exam result with proper typing
     const examResultData: Prisma.ExamResultCreateInput = {
       exam: { connect: { id: validatedData.examId } },
       student: { connect: { id: validatedData.studentId } },
-      score: totalScore,
+      score: percentageScore,
       endTime: new Date(),
       addSubAnswers: validatedData.addSubAnswers ? validatedData.addSubAnswers : undefined,
       mulDivAnswers: validatedData.mulDivAnswers ? validatedData.mulDivAnswers : undefined,
