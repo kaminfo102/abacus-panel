@@ -91,7 +91,7 @@ export default async function StudentExams() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">زمان: {exam.timeLimit} ثانیه</span>
+                          <span className="text-sm">زمان: {exam.timeLimit} دقیقه</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calculator className="h-4 w-4 text-muted-foreground" />

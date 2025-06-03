@@ -52,6 +52,13 @@ function generateExamRows(exam: Exam): ExamRow[] {
   return rows;
 }
 
+// Utility to format seconds into minutes and seconds
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
 export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   // Debug: log questionsJson and parsed examRows
   let parsedRows: ExamRow[] = [];
@@ -76,7 +83,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   }
 
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(exam.timeLimit);
+  const [timeLeft, setTimeLeft] = useState(exam.timeLimit * 60);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -132,7 +139,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     }
 
     // Calculate final time spent
-    const finalTimeSpent = autoFinish ? exam.timeLimit : Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const finalTimeSpent = autoFinish ? exam.timeLimit * 60 : Math.floor((Date.now() - startTimeRef.current) / 1000);
 
     // Use provided answers if available (for auto-finish) or current state
     const answersToSubmit = {
@@ -193,13 +200,16 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     <div className="space-y-4">
       <Card>
         <CardContent className="pt-4 items-center">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
-            <div className="flex justify-center w-full">
-              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/50 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800">
-                <Clock className="h-6 w-6 text-red-600 dark:text-red-400" />
-                <h2 className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
-                  زمان باقیمانده: {timeLeft} ثانیه
-                </h2>
+          <div className="flex flex-col items-center justify-center w-full mb-8">
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50 p-6 rounded-2xl border border-red-200 dark:border-red-800 shadow-lg w-full max-w-md">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                  <Clock className="h-8 w-8" />
+                  <span className="text-lg font-medium">زمان باقیمانده</span>
+                </div>
+                <div className="text-4xl font-bold text-red-700 dark:text-red-300 tracking-wider">
+                  {formatTime(timeLeft)}
+                </div>
               </div>
             </div>
           </div>

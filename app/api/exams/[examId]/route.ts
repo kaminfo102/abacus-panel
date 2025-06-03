@@ -10,7 +10,7 @@ const examSchema = z.object({
   digitCount: z.number().min(1, 'حداقل یک رقم باید وارد شود'),
   rowCount: z.number().min(1, 'حداقل یک ردیف باید وارد شود'),
   itemsPerRow: z.number().min(1, 'حداقل یک آیتم در هر ردیف باید وارد شود'),
-  timeLimit: z.number().min(30, 'حداقل زمان 30 ثانیه باید باشد'),
+  timeLimit: z.number().min(1, 'حداقل زمان 1 دقیقه باید باشد'),
   operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
   addSubQuestions: z.any().optional(),
@@ -106,7 +106,7 @@ export async function PATCH(
         digitCount: validatedData.digitCount,
         rowCount: validatedData.rowCount,
         itemsPerRow: validatedData.itemsPerRow,
-        timeLimit: validatedData.timeLimit * 60, // تبدیل دقیقه به ثانیه
+        timeLimit: validatedData.timeLimit,
         operators: validatedData.operators,
         term: validatedData.term,
         addSubQuestions: validatedData.addSubQuestions,

@@ -47,7 +47,7 @@ export default async function EditExamPage({ params }: EditExamPageProps) {
   // تبدیل داده‌ها برای نمایش در فرم
   const examData = {
     ...exam,
-          timeLimit: Math.floor(exam.timeLimit / 60),
+    timeLimit: exam.timeLimit,
     operators: exam.operators.split(','),
     addSubQuestions: typeof exam.addSubQuestions === 'string' 
       ? JSON.parse(exam.addSubQuestions)

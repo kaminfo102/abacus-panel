@@ -94,7 +94,7 @@ export default async function StudentDashboard() {
               <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  <span>زمان: {latestExam.timeLimit} ثانیه</span>
+                  <span>زمان: {latestExam.timeLimit} دقیقه</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calculator className="h-4 w-4" />

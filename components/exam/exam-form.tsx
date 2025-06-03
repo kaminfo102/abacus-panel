@@ -170,7 +170,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
       const formData = {
         ...values,
         operators: values.operators.join(','),
-        timeLimit: values.timeLimit * 60,
+        timeLimit: values.timeLimit,
         addSubQuestions: values.operators.some(op => op === '+' || op === '-') ? addSubQuestions : undefined,
         mulDivQuestions: values.operators.some(op => op === '*' || op === '/') ? mulDivQuestions : undefined,
       };
