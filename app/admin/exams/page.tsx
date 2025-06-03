@@ -21,6 +21,12 @@ export default async function Exams() {
     },
   });
 
+  const transformedExams = exams.map(exam => ({
+    ...exam,
+    addSubQuestions: exam.addSubQuestions ? JSON.parse(exam.addSubQuestions as string) : undefined,
+    mulDivQuestions: exam.mulDivQuestions ? JSON.parse(exam.mulDivQuestions as string) : undefined,
+  }));
+
   return (
     <DashboardLayout requiredRole="ADMIN">
       <div className="page-transition space-y-8">
@@ -39,7 +45,7 @@ export default async function Exams() {
           </Link>
         </div>
 
-        <ExamTable exams={exams} />
+        <ExamTable exams={transformedExams} />
       </div>
     </DashboardLayout>
   );

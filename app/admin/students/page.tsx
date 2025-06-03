@@ -49,7 +49,8 @@ export default async function StudentsPage() {
       score: er.score,
       examId: er.examId,
       examTitle: er.exam.title
-    }))
+    })),
+    examResultsCount: student.examResults.length
   }));
 
   return (
