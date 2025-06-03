@@ -13,7 +13,7 @@ export const KURDISTAN_CITIES = [
 
 export const STUDENT_TERMS = [
   
-    'ُStarter(استارتر)',
+    'Starter(استارتر)',
     'Basic(ترم 1)',
     'Elementary 1(ترم 2)',
     'Elementary 2(ترم 3)',
