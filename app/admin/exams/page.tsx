@@ -23,8 +23,12 @@ export default async function Exams() {
 
   const transformedExams = exams.map(exam => ({
     ...exam,
-    addSubQuestions: exam.addSubQuestions ? JSON.parse(exam.addSubQuestions as string) : undefined,
-    mulDivQuestions: exam.mulDivQuestions ? JSON.parse(exam.mulDivQuestions as string) : undefined,
+    addSubQuestions: typeof exam.addSubQuestions === 'string' 
+      ? JSON.parse(exam.addSubQuestions)
+      : exam.addSubQuestions,
+    mulDivQuestions: typeof exam.mulDivQuestions === 'string'
+      ? JSON.parse(exam.mulDivQuestions)
+      : exam.mulDivQuestions,
   }));
 
   return (
