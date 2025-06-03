@@ -13,7 +13,7 @@ import { StudentAddSubTable } from './StudentAddSubTable';
 import { StudentMulDivTable } from './StudentMulDivTable';
 
 interface ExamWithQuestionsJson extends Exam {
-  questionsJson: string | null;
+  questionsJson?: string | null;
 }
 
 interface ExamTakingFormProps {

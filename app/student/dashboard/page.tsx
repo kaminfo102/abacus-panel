@@ -51,6 +51,16 @@ export default async function StudentDashboard() {
     orderBy: { createdAt: 'desc' },
   }) as Exam | null;
 
+  // بررسی نتیجه آزمون
+  const examResult = latestExam ? await db.examResult.findUnique({
+    where: {
+      examId_studentId: {
+        examId: latestExam.id,
+        studentId: student.id,
+      },
+    },
+  }) : null;
+
   return (
     <DashboardLayout requiredRole="STUDENT">
       <div className="page-transition space-y-8">
@@ -102,12 +112,24 @@ export default async function StudentDashboard() {
                 </div>
               </div>
               {latestExam.isActive ? (
-                <Link href={`/student/exams/${latestExam.id}`} className="block">
-                  <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                    <Play className="h-5 w-5 ml-2" />
-                    شروع آزمون
-                  </Button>
-                </Link>
+                examResult ? (
+                  <div className="cursor-not-allowed">
+                    <Button 
+                      className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
+                      disabled
+                    >
+                      <AlertCircle className="h-5 w-5 ml-2" />
+                      شما در این آزمون شرکت کرده‌اید
+                    </Button>
+                  </div>
+                ) : (
+                  <Link href={`/student/exams/${latestExam.id}`} className="block">
+                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Play className="h-5 w-5 ml-2" />
+                      شروع آزمون
+                    </Button>
+                  </Link>
+                )
               ) : (
                 <div className="cursor-not-allowed">
                   <Button 
