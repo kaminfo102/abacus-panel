@@ -13,6 +13,8 @@ const examSchema = z.object({
   timeLimit: z.number().min(30, 'حداقل زمان 30 ثانیه باید باشد'),
   operators: z.string().min(1, 'حداقل یک عملگر باید انتخاب شود'),
   term: z.string().min(1, 'انتخاب ترم الزامی است'),
+  addSubQuestions: z.any().optional(),
+  mulDivQuestions: z.any().optional(),
 });
 
 // Helper functions for generating exam questions
@@ -95,16 +97,20 @@ export async function PATCH(
     const body = await req.json();
     const validatedData = examSchema.parse(body);
 
-    // Regenerate questions if settings are changed
-    const questions = generateExamRows(validatedData);
-
     const exam = await db.exam.update({
       where: {
         id: params.examId,
       },
       data: {
-        ...validatedData,
-        questionsJson: JSON.stringify(questions),
+        title: validatedData.title,
+        digitCount: validatedData.digitCount,
+        rowCount: validatedData.rowCount,
+        itemsPerRow: validatedData.itemsPerRow,
+        timeLimit: validatedData.timeLimit * 60, // تبدیل دقیقه به ثانیه
+        operators: validatedData.operators,
+        term: validatedData.term,
+        addSubQuestions: validatedData.addSubQuestions,
+        mulDivQuestions: validatedData.mulDivQuestions,
       },
     });
 

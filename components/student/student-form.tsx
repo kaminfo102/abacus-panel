@@ -26,41 +26,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-
-const kurdistanCities = [
-  'سنندج',
-  'سقز',
-  'مریوان',
-  'بانه',
-  'کامیاران',
-  'دیواندره',
-  'بیجار',
-  'دهگلان',
-  'سروآباد',
-  'قروه',
-];
-
-const terms = [
-  'استارتر',
-  'ترم 1',
-  'ترم 2',
-  'ترم 3',
-  'ترم 4',
-  'ترم 5',
-  'ترم 6',
-  'ترم 7',
-  'ترم 8',
-  'ترم 9',
-  'ترم 10',
-  'ترم 11',
-  'ترم 12',
-  'ترم 13',
-  'ترم 14',
-  'ترم 15',
-  'ترم 16',
-  'ترم 17',
-  'ترم 18',
-];
+import { KURDISTAN_CITIES, STUDENT_TERMS } from '@/lib/constants';
 
 const studentSchema = z.object({
   firstName: z.string().min(2, 'نام باید حداقل ۲ کاراکتر باشد'),
@@ -219,7 +185,7 @@ export function StudentForm({ student }: StudentFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {kurdistanCities.map((city) => (
+                    {KURDISTAN_CITIES.map((city) => (
                       <SelectItem key={city} value={city}>
                         {city}
                       </SelectItem>
@@ -244,7 +210,7 @@ export function StudentForm({ student }: StudentFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {terms.map((term) => (
+                    {STUDENT_TERMS.map((term) => (
                       <SelectItem key={term} value={term}>
                         {term}
                       </SelectItem>
