@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 interface MulDivQuestion {
   numbers: number[];
@@ -16,8 +17,32 @@ interface StudentMulDivTableProps {
 }
 
 export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ questions, answers, setAnswers, disabled, showAnswers = false }) => {
+  const [errors, setErrors] = useState<{ [key: number]: string }>({});
+
+  // تبدیل اعداد فارسی به انگلیسی
+  const convertPersianToEnglish = (value: string): string => {
+    const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return value.split('').map(char => {
+      const index = persianNumbers.indexOf(char);
+      return index !== -1 ? index.toString() : char;
+    }).join('');
+  };
+
   const handleAnswerChange = (idx: number, value: string) => {
-    setAnswers(prev => prev.map((a, i) => i === idx ? value : a));
+    // تبدیل اعداد فارسی به انگلیسی
+    const englishValue = convertPersianToEnglish(value);
+    
+    // بررسی اعتبار ورودی
+    if (englishValue === '') {
+      setAnswers(prev => prev.map((a, i) => i === idx ? '' : a));
+      setErrors(prev => ({ ...prev, [idx]: '' }));
+    } else if (/^\d+$/.test(englishValue)) {
+      setAnswers(prev => prev.map((a, i) => i === idx ? englishValue : a));
+      setErrors(prev => ({ ...prev, [idx]: '' }));
+    } else {
+      toast.error('لطفا فقط عدد وارد کنید');
+      setErrors(prev => ({ ...prev, [idx]: 'فقط عدد مجاز است' }));
+    }
   };
 
   return (
@@ -28,7 +53,7 @@ export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ question
           <tr className="bg-primary/10">
             <th className="p-2 border">شماره</th>
             <th className="p-2 border">سوال</th>
-            <th className="p-2 border">جواب شما</th>
+            <th className="p-2 border">جواب </th>
           </tr>
         </thead>
         <tbody>
@@ -49,12 +74,17 @@ export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ question
               </td>
               <td className="p-2 border text-center">
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={answers[idx] ?? ''}
                   onChange={e => handleAnswerChange(idx, e.target.value)}
                   disabled={disabled}
-                  className="w-32 mx-auto"
+                  className={`w-full sm:w-32 mx-auto text-lg sm:text-base ${errors[idx] ? 'border-red-500' : ''}`}
                 />
+                {errors[idx] && (
+                  <div className="text-red-500 text-sm mt-1">{errors[idx]}</div>
+                )}
                 {showAnswers && (
                   <div className="text-sm text-muted-foreground mt-1">
                     جواب: {q.answer}

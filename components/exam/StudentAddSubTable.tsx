@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 interface AddSubQuestion {
   numbers: number[];
@@ -16,12 +17,36 @@ interface StudentAddSubTableProps {
 }
 
 export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ questions, answers, setAnswers, disabled, showAnswers = false }) => {
+  const [errors, setErrors] = useState<{ [key: number]: string }>({});
+
   // پیدا کردن بیشترین تعداد عدد در بین سوالات برای تعیین تعداد ردیف‌ها
   const maxRows = Math.max(...questions.map(q => q.numbers.length), 0);
 
+  // تبدیل اعداد فارسی به انگلیسی
+  const convertPersianToEnglish = (value: string): string => {
+    const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return value.split('').map(char => {
+      const index = persianNumbers.indexOf(char);
+      return index !== -1 ? index.toString() : char;
+    }).join('');
+  };
+
   // هندل تغییر جواب
   const handleAnswerChange = (idx: number, value: string) => {
-    setAnswers(prev => prev.map((a, i) => i === idx ? value : a));
+    // تبدیل اعداد فارسی به انگلیسی
+    const englishValue = convertPersianToEnglish(value);
+    
+    // بررسی اعتبار ورودی
+    if (englishValue === '') {
+      setAnswers(prev => prev.map((a, i) => i === idx ? '' : a));
+      setErrors(prev => ({ ...prev, [idx]: '' }));
+    } else if (/^\d+$/.test(englishValue)) {
+      setAnswers(prev => prev.map((a, i) => i === idx ? englishValue : a));
+      setErrors(prev => ({ ...prev, [idx]: '' }));
+    } else {
+      toast.error('لطفا فقط عدد وارد کنید');
+      setErrors(prev => ({ ...prev, [idx]: 'فقط عدد مجاز است' }));
+    }
   };
 
   return (
@@ -30,7 +55,7 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
       <table className="min-w-full border border-gray-300 rounded-lg" dir="ltr">
         <thead>
           <tr className="bg-primary/10">
-            <th className="p-2 border text-center align-middle bg-violet-700 text-white" rowSpan={maxRows + 2}>Abacus</th>
+            <th className="p-2 border text-center align-middle bg-violet-700 text-white" rowSpan={maxRows + 2}>سوال</th>
             {questions.map((_, idx) => (
               <th key={idx} className="p-2 border text-center bg-violet-700 text-white">{idx + 1}</th>
             ))}
@@ -62,12 +87,17 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
             {questions.map((q, idx) => (
               <td key={idx} className="p-2 border text-center">
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={answers[idx] ?? ''}
                   onChange={e => handleAnswerChange(idx, e.target.value)}
                   disabled={disabled}
-                  className="w-32 mx-auto"
+                  className={`w-full sm:w-32 mx-auto text-lg sm:text-base ${errors[idx] ? 'border-red-500' : ''}`}
                 />
+                {errors[idx] && (
+                  <div className="text-red-500 text-sm mt-1">{errors[idx]}</div>
+                )}
                 {showAnswers && (
                   <div className="text-sm text-muted-foreground mt-1">
                     جواب: {q.answer}
