@@ -21,6 +21,15 @@ import { toast } from '@/hooks/use-toast';
 import { UserRole } from '@prisma/client';
 import { Loader2 } from 'lucide-react';
 
+// Utility function to convert Persian numbers to English numbers
+const convertPersianToEnglish = (str: string) => {
+  const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return str.split('').map(char => {
+    const index = persianNumbers.indexOf(char);
+    return index !== -1 ? index.toString() : char;
+  }).join('');
+};
+
 interface LoginFormProps {
   role: string;
 }
@@ -54,8 +63,16 @@ export function LoginForm({ role }: LoginFormProps) {
 
     try {
       const loginData = isStudent 
-        ? { identifier: (values as { nationalId: string }).nationalId, password: values.password, role: 'STUDENT' }
-        : { identifier: (values as { email: string }).email, password: values.password, role: 'ADMIN' };
+        ? { 
+            identifier: convertPersianToEnglish((values as { nationalId: string }).nationalId), 
+            password: convertPersianToEnglish(values.password), 
+            role: 'STUDENT' 
+          }
+        : { 
+            identifier: (values as { email: string }).email, 
+            password: values.password, 
+            role: 'ADMIN' 
+          };
 
       const result = await signIn('credentials', {
         ...loginData,
