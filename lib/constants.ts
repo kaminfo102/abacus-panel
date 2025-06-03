@@ -13,24 +13,25 @@ export const KURDISTAN_CITIES = [
 
 export const STUDENT_TERMS = [
   
-    'استارتر',
-    'ترم 1',
-    'ترم 2',
-    'ترم 3',
-    'ترم 4',
-    'ترم 5',
-    'ترم 6',
-    'ترم 7',
-    'ترم 8',
-    'ترم 9',
-    'ترم 10',
-    'ترم 11',
-    'ترم 12',
-    'ترم 13',
-    'ترم 14',
-    'ترم 15',
-    'ترم 16',
-    'ترم 17',
-    'ترم 18'
-  
+    'ُStarter(استارتر)',
+    'Basic(ترم 1)',
+    'Elementary 1(ترم 2)',
+    'Elementary 2(ترم 3)',
+    'Pre-Intermediate 1(ترم 4)',
+    'Pre-Intermediate 2(ترم 5)',
+    'Pre-Intermediate 3(ترم 6)',
+    'Intermediate 1(ترم 7)',
+    'Intermediate 2(ترم 8)',
+    'Intermediate 3(ترم 9)',
+    'Upper-Intermediate 1(ترم 10)',
+    'Upper-Intermediate 2(ترم 11)',
+    'Advanced (ترم 12)',
+    'Advanced +1(ترم 13)',
+    'Advanced +2(ترم 14)',
+    'Advanced +3(ترم 15)',
+    'Advanced +4(ترم 16)',
+    'Advanced +5(ترم 17)',
+    'Advanced +6(ترم 18)',
+    
+   
 ];
