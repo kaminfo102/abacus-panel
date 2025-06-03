@@ -100,15 +100,15 @@ export default async function StudentDashboard() {
               <Calculator className={`h-6 w-6 ${latestExam.isActive ? 'text-red-500' : 'text-gray-500'}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">{latestExam.title}</div>
-              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2 text-center">{latestExam.title}</div>
+              <div className="flex items-center justify-center gap-4 text-base font-bold text-emerald-600 dark:text-emerald-400 mb-4">
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-5 w-5" />
                   <span>زمان: {latestExam.timeLimit} دقیقه</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Calculator className="h-4 w-4" />
-                  <span>تعداد ارقام: {latestExam.digitCount}</span>
+                  <Calculator className="h-5 w-5" />
+                  <span>سطح آزمون: {latestExam.term}</span>
                 </div>
               </div>
               {latestExam.isActive ? (
@@ -124,7 +124,7 @@ export default async function StudentDashboard() {
                   </div>
                 ) : (
                   <Link href={`/student/exams/${latestExam.id}`} className="block">
-                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
                       <Play className="h-5 w-5 ml-2" />
                       شروع آزمون
                     </Button>
