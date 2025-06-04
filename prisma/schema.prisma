@@ -2,15 +2,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+//datasource db {
+//  provider = "sqlite"
+//  url      = "file:./dev.db"
   
-}
-// datasource db {
-//  provider = "postgresql"
-//  url      = "postgresql://postgres:boy6P5nc4NQTjkpd@services.gen5.chabokan.net:59109/jesse"
 //}
+ datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:lu0zTEY9XgTiwwD0@services.irn9.chabokan.net:2618/ronny"
+}
 
 model User {
   id              String    @id @default(uuid())
