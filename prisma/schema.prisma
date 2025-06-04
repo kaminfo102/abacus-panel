@@ -9,19 +9,19 @@ generator client {
 //}
  datasource db {
  provider = "postgresql"
-  url      = "postgresql://postgres:lu0zTEY9XgTiwwD0@services.irn9.chabokan.net:2618/ronny"
+  url      = "postgresql://postgres:JYJvtRWaM7eJGWWV@services.gen1.chabokan.net:50297/james?connection_timeout=30"
 }
 
 model User {
   id              String    @id @default(uuid())
   name            String
   email           String?   @unique
-  emailVerified   DateTime?
+  emailVerified   DateTime? @db.Timestamp
   image           String?
   password        String
   role            UserRole  @default(STUDENT)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now()) @db.Timestamp
+  updatedAt       DateTime  @updatedAt @db.Timestamp
   student         Student?
   notifications   Notification[]
 }
@@ -41,8 +41,8 @@ model Student {
   activities      Activity[]
   exams           Exam[]    @relation("StudentExams")
   examResults     ExamResult[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now()) @db.Timestamp
+  updatedAt       DateTime  @updatedAt @db.Timestamp
 }
 
 model Activity {
@@ -55,8 +55,8 @@ model Activity {
   term            String
   studentId       String?
   student         Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now()) @db.Timestamp
+  updatedAt       DateTime  @updatedAt @db.Timestamp
 }
 
 model Exam {
@@ -74,8 +74,8 @@ model Exam {
   mulDivQuestions Json?
   students     Student[] @relation("StudentExams")
   results      ExamResult[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now()) @db.Timestamp
+  updatedAt    DateTime  @updatedAt @db.Timestamp
 
   @@map("exams")
 }
@@ -85,8 +85,8 @@ model Notification {
   title     String
   message   String
   isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp
+  updatedAt DateTime @updatedAt @db.Timestamp
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
@@ -101,13 +101,13 @@ model ExamResult {
   score       Int
   addSubAnswers Json?
   mulDivAnswers Json?
-  startTime   DateTime  @default(now())
-  endTime     DateTime?
+  startTime   DateTime  @default(now()) @db.Timestamp
+  endTime     DateTime? @db.Timestamp
   timeSpent   Int?
   exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
   student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now()) @db.Timestamp
+  updatedAt   DateTime  @updatedAt @db.Timestamp
 
   @@unique([examId, studentId])
   @@map("exam_results")
