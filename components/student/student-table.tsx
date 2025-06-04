@@ -78,6 +78,7 @@ export function StudentTable({ students }: StudentTableProps) {
   });
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [selectedTerm, setSelectedTerm] = useState<string>('all');
+  const [examStatus, setExamStatus] = useState<'all' | 'participated' | 'not_participated'>('all');
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
@@ -98,8 +99,14 @@ export function StudentTable({ students }: StudentTableProps) {
       
       const matchesCity = selectedCity === 'all' || student.city === selectedCity;
       const matchesTerm = selectedTerm === 'all' || student.term === selectedTerm;
+      
+      const hasExams = student.examResults && student.examResults.length > 0;
+      const matchesExamStatus = 
+        examStatus === 'all' || 
+        (examStatus === 'participated' && hasExams) || 
+        (examStatus === 'not_participated' && !hasExams);
 
-      return matchesSearch && matchesCity && matchesTerm;
+      return matchesSearch && matchesCity && matchesTerm && matchesExamStatus;
     })
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
@@ -226,6 +233,20 @@ export function StudentTable({ students }: StudentTableProps) {
                         {term}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={examStatus} 
+                  onValueChange={(value) => setExamStatus(value as 'all' | 'participated' | 'not_participated')}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="وضعیت آزمون" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">همه دانش‌آموزان</SelectItem>
+                    <SelectItem value="participated">شرکت کرده در آزمون</SelectItem>
+                    <SelectItem value="not_participated">شرکت نکرده در آزمون</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
