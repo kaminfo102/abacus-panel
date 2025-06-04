@@ -8,7 +8,7 @@ generator client {
   
 //}
  datasource db {
-  provider = "postgresql"
+ provider = "postgresql"
   url      = "postgresql://postgres:lu0zTEY9XgTiwwD0@services.irn9.chabokan.net:2618/ronny"
 }
 
@@ -69,6 +69,7 @@ model Exam {
   operators    String   // e.g. "+,-,*"
   term         String   // student term
   isActive     Boolean  @default(true)
+  showResult   Boolean  @default(false)
   addSubQuestions Json?
   mulDivQuestions Json?
   students     Student[] @relation("StudentExams")

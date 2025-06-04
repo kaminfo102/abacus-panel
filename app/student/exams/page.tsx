@@ -22,6 +22,7 @@ interface ExamWithActive {
   mulDivQuestions: any;
   createdAt: Date;
   updatedAt: Date;
+  showResult?: boolean;
 }
 
 export default async function StudentExams() {
@@ -103,8 +104,17 @@ export default async function StudentExams() {
                         </div>
                         {hasTaken && result && (
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm">نمره: {result.score}</span>
+                            {exam.showResult ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                <span className="text-sm">نمره: {result.score}</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="h-4 w-4 text-amber-600" />
+                                <span className="text-sm">نتیجه به زودی نمایش داده می شود</span>
+                              </>
+                            )}
                           </div>
                         )}
                         {!exam.isActive && (
@@ -116,14 +126,23 @@ export default async function StudentExams() {
                       </div>
 
                       {canAccess ? (
-                        <Link href={hasTaken ? `/student/exams/${exam.id}/result` : `/student/exams/${exam.id}`}>
+                        hasTaken && !exam.showResult ? (
                           <Button 
                             className="w-full" 
-                            disabled={!exam.isActive && !hasTaken}
+                            disabled={true}
                           >
-                            {hasTaken ? 'مشاهده نتیجه' : 'شروع آزمون'}
+                            مشاهده نتیجه
                           </Button>
-                        </Link>
+                        ) : (
+                          <Link href={hasTaken ? `/student/exams/${exam.id}/result` : `/student/exams/${exam.id}`}>
+                            <Button 
+                              className="w-full" 
+                              disabled={!exam.isActive && !hasTaken}
+                            >
+                              {hasTaken ? 'مشاهده نتیجه' : 'شروع آزمون'}
+                            </Button>
+                          </Link>
+                        )
                       ) : (
                         <Button 
                           className="w-full" 

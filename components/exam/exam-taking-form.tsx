@@ -5,15 +5,25 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Clock } from 'lucide-react';
+import { Loader2, Clock, CheckCircle2 } from 'lucide-react';
 import { Student, Exam } from '@prisma/client';
 import { AbacusComponent } from './Abacus';
 import type { ExamRow } from '../../lib/types';
 import { StudentAddSubTable } from './StudentAddSubTable';
 import { StudentMulDivTable } from './StudentMulDivTable';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import Image from 'next/image';
 
 interface ExamWithQuestionsJson extends Exam {
   questionsJson?: string | null;
+  showResult: boolean;
 }
 
 interface ExamTakingFormProps {
@@ -89,6 +99,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   const startTimeRef = useRef<number>(Date.now());
   const router = useRouter();
   const [timeSpent, setTimeSpent] = useState(0);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [isAutoFinished, setIsAutoFinished] = useState(false);
 
   // state پاسخ‌ها
@@ -102,7 +113,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           setIsAutoFinished(true);
-          console.log('Time ended - Current answers:', { addSubAnswers, mulDivAnswers });
+          setFinished(true);
           // Ensure we capture the latest state before finishing
           const currentAnswers = {
             addSub: [...addSubAnswers],
@@ -133,7 +144,6 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
     console.log('Current answers if provided:', currentAnswers);
     
     setIsLoading(true);
-    setFinished(true);
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -171,19 +181,22 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
             variant: 'destructive',
           });
         }
-        router.push(`/student/exams/${exam.id}/result`);
+        if (exam.showResult) {
+        //   router.push(`/student/exams/${exam.id}/result`);
+        // } else {
+          // router.push('/student/dashboard');
+          // // Refresh the page after navigation
+          // window.location.reload();
+          setShowCompletionDialog(true);
+        }
         return;
       }
 
       if (!response.ok) throw new Error();
 
-      toast({
-        title: autoFinish ? 'زمان آزمون به پایان رسید' : 'آزمون با موفقیت ثبت شد',
-        description: autoFinish
-          ? 'زمان شما به پایان رسید. نتیجه آزمون ثبت شد.'
-          : 'پاسخ‌های شما ثبت شد.',
-      });
-      router.push(`/student/exams/${exam.id}/result`);
+      // Show completion dialog instead of toast
+      setShowCompletionDialog(true);
+      setIsAutoFinished(autoFinish);
     } catch (error) {
       console.error('Error submitting exam:', error);
       toast({
@@ -193,6 +206,16 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDialogAction = () => {
+    if (exam.showResult) {
+      router.push(`/student/exams/${exam.id}/result`);
+    } else {
+      router.push('/student/dashboard');
+      // Refresh the page after navigation
+      window.location.reload();
     }
   };
 
@@ -244,6 +267,57 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog 
+        open={showCompletionDialog} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCompletionDialog(false);
+          }
+        }}
+      >
+        <DialogContent 
+          className="sm:max-w-md [&>button]:hidden"
+          onPointerDownOutside={(e) => {
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-green-600">
+              {isAutoFinished ? 'زمان آزمون به پایان رسید' : 'آزمون با موفقیت به پایان رسید'}
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              <div className="flex flex-col items-center gap-4 py-4">
+                <div className="relative w-32 h-32">
+                  <Image
+                    src="/images/exam-complete.svg"
+                    alt="Exam Complete"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <p className="text-lg text-gray-600">
+                  {isAutoFinished 
+                    ? 'زمان آزمون به پایان رسید. پاسخ‌های شما با موفقیت ثبت شد.'
+                    : 'پاسخ‌های شما با موفقیت ثبت شد.'}
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button
+              onClick={handleDialogAction}
+              className="w-full max-w-md h-12 text-lg font-semibold"
+              size="lg"
+            >
+              {exam.showResult ? 'مشاهده نتیجه' : 'بازگشت به داشبورد'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

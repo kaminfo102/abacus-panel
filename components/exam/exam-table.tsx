@@ -45,6 +45,7 @@ interface Exam {
   operators: string;
   term: string;
   isActive: boolean;
+  showResult: boolean;
   addSubQuestions?: string | {
     numbers: number[];
     operators: ('+' | '-')[];
@@ -171,6 +172,34 @@ export function ExamTable({ exams }: ExamTableProps) {
     }
   };
 
+  const handleToggleShowResult = async (examId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/exams/${examId}/toggle-show-result`, {
+        method: 'PATCH',
+      });
+
+      if (!response.ok) {
+        throw new Error('مشکلی در تغییر وضعیت نمایش نتیجه رخ داده است');
+      }
+
+      toast({
+        title: 'موفقیت‌آمیز',
+        description: `نمایش نتیجه با موفقیت ${currentStatus ? 'غیرفعال' : 'فعال'} شد.`,
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error('Toggle error:', error);
+      toast({
+        title: 'خطا',
+        description: error instanceof Error 
+          ? error.message 
+          : 'مشکلی در تغییر وضعیت نمایش نتیجه رخ داده است.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center">
@@ -212,6 +241,7 @@ export function ExamTable({ exams }: ExamTableProps) {
                 </Button>
               </TableHead>
               <TableHead className="text-right">وضعیت</TableHead>
+              <TableHead className="text-right">نمایش نتیجه</TableHead>
               <TableHead className="text-right">عملیات</TableHead>
             </TableRow>
           </TableHeader>
@@ -251,6 +281,16 @@ export function ExamTable({ exams }: ExamTableProps) {
                       className="w-24"
                     >
                       {exam.isActive ? 'فعال' : 'غیرفعال'}
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant={exam.showResult ? "default" : "secondary"}
+                      size="sm"
+                      onClick={() => handleToggleShowResult(exam.id, exam.showResult)}
+                      className="w-24"
+                    >
+                      {exam.showResult ? 'فعال' : 'غیرفعال'}
                     </Button>
                   </TableCell>
                   <TableCell className="text-right">
