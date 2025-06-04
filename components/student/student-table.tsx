@@ -69,7 +69,15 @@ export function StudentTable({ students }: StudentTableProps) {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState('10');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortConfig, setSortConfig] = useState<{
+    key: 'term' | 'city' | null;
+    direction: 'asc' | 'desc';
+  }>({
+    key: null,
+    direction: 'desc'
+  });
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [selectedTerm, setSelectedTerm] = useState<string>('all');
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
@@ -77,20 +85,36 @@ export function StudentTable({ students }: StudentTableProps) {
     setIsClient(true);
   }, []);
 
+  // Get unique cities and terms for filter options
+  const cities = Array.from(new Set(students.map(student => student.city))).sort();
+  const terms = Array.from(new Set(students.map(student => student.term))).sort();
+
   const filteredStudents = students
     .filter((student) => {
       const fullName = `${student.firstName} ${student.lastName}`;
-      return (
-        fullName.includes(searchTerm) ||
+      const matchesSearch = fullName.includes(searchTerm) ||
         student.nationalId.includes(searchTerm) ||
-        student.mobileNumber.includes(searchTerm)
-      );
+        student.mobileNumber.includes(searchTerm);
+      
+      const matchesCity = selectedCity === 'all' || student.city === selectedCity;
+      const matchesTerm = selectedTerm === 'all' || student.term === selectedTerm;
+
+      return matchesSearch && matchesCity && matchesTerm;
     })
     .sort((a, b) => {
-      if (sortOrder === 'asc') {
-        return a.term.localeCompare(b.term);
+      if (!sortConfig.key) return 0;
+      
+      const direction = sortConfig.direction === 'asc' ? 1 : -1;
+      
+      if (sortConfig.key === 'term') {
+        return direction * a.term.localeCompare(b.term);
       }
-      return b.term.localeCompare(a.term);
+      
+      if (sortConfig.key === 'city') {
+        return direction * a.city.localeCompare(b.city);
+      }
+      
+      return 0;
     });
 
   const itemsPerPage = pageSize === 'all' ? filteredStudents.length : parseInt(pageSize);
@@ -98,8 +122,11 @@ export function StudentTable({ students }: StudentTableProps) {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleSort = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  const handleSort = (key: 'term' | 'city') => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
   const handleEdit = (studentId: string) => {
@@ -162,15 +189,46 @@ export function StudentTable({ students }: StudentTableProps) {
       {isClient ? (
         <>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="جستجوی دانش‌آموز..."
-                className="w-full pl-8 text-right"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="جستجوی دانش‌آموز..."
+                  className="w-full pl-8 text-right"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={selectedCity} onValueChange={setSelectedCity}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="شهرستان" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">همه شهرستان‌ها</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="ترم" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">همه ترم‌ها</SelectItem>
+                    {terms.map((term) => (
+                      <SelectItem key={term} value={term}>
+                        {term}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             {selectedStudents.length > 0 && (
               <Button
@@ -199,8 +257,22 @@ export function StudentTable({ students }: StudentTableProps) {
                   <TableHead className="text-right">نام و نام‌خانوادگی</TableHead>
                   <TableHead className="text-right hidden sm:table-cell">کد ملی</TableHead>
                   <TableHead className="text-right hidden md:table-cell">شماره موبایل</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">شهرستان</TableHead>
-                  <TableHead className="text-right">ترم</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell cursor-pointer" onClick={() => handleSort('city')}>
+                    <div className="flex items-center justify-end gap-1">
+                      شهرستان
+                      {sortConfig.key === 'city' && (
+                        sortConfig.direction === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer" onClick={() => handleSort('term')}>
+                    <div className="flex items-center justify-end gap-1">
+                      ترم
+                      {sortConfig.key === 'term' && (
+                        sortConfig.direction === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">تعداد آزمون</TableHead>
                   <TableHead className="text-right w-[120px]">عملیات</TableHead>
                 </TableRow>
