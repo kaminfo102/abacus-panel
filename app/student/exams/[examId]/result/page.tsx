@@ -6,13 +6,30 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import React from 'react';
 
 interface ExamResultPageProps {
   params: {
     examId: string;
   };
+}
+
+interface Exam {
+  id: string;
+  title: string;
+  digitCount: number;
+  rowCount: number;
+  itemsPerRow: number;
+  timeLimit: number;
+  operators: string;
+  term: string;
+  isActive: boolean;
+  showResult: boolean;
+  addSubQuestions: any;
+  mulDivQuestions: any;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default async function ExamResultPage({ params }: ExamResultPageProps) {
@@ -32,7 +49,7 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
 
   const exam = await db.exam.findUnique({
     where: { id: params.examId },
-  });
+  }) as Exam | null;
 
   if (!exam || exam.term !== student.term) {
     redirect('/student/exams');
@@ -51,6 +68,51 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
     redirect(`/student/exams/${exam.id}`);
   }
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const timeSpent = result.timeSpent || 0;
+
+  if (!exam.showResult) {
+    return (
+      <DashboardLayout requiredRole="STUDENT">
+        <div className="page-transition space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">نتیجه آزمون {exam.title}</h1>
+            <p className="text-muted-foreground">
+              تاریخ آزمون: {new Date(result.createdAt).toLocaleDateString('fa-IR')}
+            </p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>اطلاعات آزمون</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>زمان صرف شده: {formatTime(timeSpent)} دقیقه</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span>نتیجه متعاقباً اعلام خواهد شد</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-center">
+            <Button asChild>
+              <Link href="/student/exams">بازگشت به لیست آزمون‌ها</Link>
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Parse questions
   const addSubQuestions = exam.addSubQuestions ? 
     (typeof exam.addSubQuestions === 'string' ? JSON.parse(exam.addSubQuestions) : exam.addSubQuestions) 
@@ -66,14 +128,6 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
   const mulDivAnswers = result.mulDivAnswers ? 
     (typeof result.mulDivAnswers === 'string' ? JSON.parse(result.mulDivAnswers) : result.mulDivAnswers) 
     : [];
-
-  const timeSpent = result.timeSpent || 0;
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
   return (
     <DashboardLayout requiredRole="STUDENT">
