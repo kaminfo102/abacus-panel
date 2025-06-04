@@ -77,6 +77,21 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
   const timeSpent = result.timeSpent || 0;
 
   if (!exam.showResult) {
+    // Parse questions and answers for display
+    const addSubQuestions = exam.addSubQuestions ? 
+      (typeof exam.addSubQuestions === 'string' ? JSON.parse(exam.addSubQuestions) : exam.addSubQuestions) 
+      : [];
+    const mulDivQuestions = exam.mulDivQuestions ? 
+      (typeof exam.mulDivQuestions === 'string' ? JSON.parse(exam.mulDivQuestions) : exam.mulDivQuestions) 
+      : [];
+
+    const addSubAnswers = result.addSubAnswers ? 
+      (typeof result.addSubAnswers === 'string' ? JSON.parse(result.addSubAnswers) : result.addSubAnswers) 
+      : [];
+    const mulDivAnswers = result.mulDivAnswers ? 
+      (typeof result.mulDivAnswers === 'string' ? JSON.parse(result.mulDivAnswers) : result.mulDivAnswers) 
+      : [];
+
     return (
       <DashboardLayout requiredRole="STUDENT">
         <div className="page-transition space-y-8">
@@ -87,21 +102,70 @@ export default async function ExamResultPage({ params }: ExamResultPageProps) {
             </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>اطلاعات آزمون</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>زمان صرف شده: {formatTime(timeSpent)} دقیقه</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span>نتیجه متعاقباً اعلام خواهد شد</span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>اطلاعات آزمون</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>زمان صرف شده: {formatTime(timeSpent)} دقیقه</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <span>نتیجه متعاقباً اعلام خواهد شد</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>پاسخ‌های شما</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {addSubQuestions.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">جمع و تفریق</h3>
+                      {addSubQuestions.map((question: any, index: number) => {
+                        const studentAnswer = addSubAnswers[index];
+                        return (
+                          <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex-1">
+                              <div className="font-medium">{question.question}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {mulDivQuestions.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">ضرب و تقسیم</h3>
+                      {mulDivQuestions.map((question: any, index: number) => {
+                        const studentAnswer = mulDivAnswers[index];
+                        return (
+                          <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex-1">
+                              <div className="font-medium">{question.question}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                پاسخ شما: {studentAnswer || 'پاسخ داده نشده'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="flex justify-center">
             <Button asChild>
