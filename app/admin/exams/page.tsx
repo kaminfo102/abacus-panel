@@ -8,6 +8,23 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { ExamTable } from '@/components/exam/exam-table';
 
+interface Exam {
+  id: string;
+  title: string;
+  digitCount: number;
+  rowCount: number;
+  itemsPerRow: number;
+  timeLimit: number;
+  operators: string;
+  term: string;
+  isActive: boolean;
+  showResult: boolean;
+  addSubQuestions?: any;
+  mulDivQuestions?: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export default async function Exams() {
   const session = await getServerSession(authOptions);
 
@@ -19,17 +36,17 @@ export default async function Exams() {
     orderBy: {
       createdAt: 'desc',
     },
-  });
+  }) as Exam[];
 
   const transformedExams = exams.map(exam => ({
     ...exam,
-    showResult: false,
     addSubQuestions: typeof exam.addSubQuestions === 'string' 
       ? JSON.parse(exam.addSubQuestions)
       : exam.addSubQuestions,
     mulDivQuestions: typeof exam.mulDivQuestions === 'string'
       ? JSON.parse(exam.mulDivQuestions)
       : exam.mulDivQuestions,
+    showResult: exam.showResult ?? false,
   }));
 
   return (
