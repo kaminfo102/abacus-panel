@@ -23,6 +23,7 @@ export default async function Exams() {
 
   const transformedExams = exams.map(exam => ({
     ...exam,
+    showResult: false,
     addSubQuestions: typeof exam.addSubQuestions === 'string' 
       ? JSON.parse(exam.addSubQuestions)
       : exam.addSubQuestions,
