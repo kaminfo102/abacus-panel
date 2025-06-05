@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
@@ -18,21 +18,23 @@ interface StudentAddSubTableProps {
 
 export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ questions, answers, setAnswers, disabled, showAnswers = false }) => {
   const [errors, setErrors] = useState<{ [key: number]: string }>({});
+  const [focusedInput, setFocusedInput] = useState<number | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // پیدا کردن بیشترین تعداد عدد در بین سوالات برای تعیین تعداد ردیف‌ها
   const maxRows = Math.max(...questions.map(q => q.numbers.length), 0);
 
   // تبدیل اعداد فارسی به انگلیسی
-  const convertPersianToEnglish = (value: string): string => {
+  const convertPersianToEnglish = useCallback((value: string): string => {
     const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return value.split('').map(char => {
       const index = persianNumbers.indexOf(char);
       return index !== -1 ? index.toString() : char;
     }).join('');
-  };
+  }, []);
 
   // هندل تغییر جواب
-  const handleAnswerChange = (idx: number, value: string) => {
+  const handleAnswerChange = useCallback((idx: number, value: string) => {
     // تبدیل اعداد فارسی به انگلیسی
     const englishValue = convertPersianToEnglish(value);
     
@@ -47,7 +49,7 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
       toast.error('لطفا فقط عدد وارد کنید');
       setErrors(prev => ({ ...prev, [idx]: 'فقط عدد مجاز است' }));
     }
-  };
+  }, [convertPersianToEnglish, setAnswers]);
 
   // تقسیم سوالات به گروه‌های 5 تایی
   const questionGroups = [];
@@ -56,7 +58,7 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
   }
 
   // کامپوننت جدول برای نمایش گروهی از سوالات
-  const QuestionTable = ({ questions: groupQuestions, startIndex }: { questions: AddSubQuestion[], startIndex: number }) => (
+  const QuestionTable = useCallback(({ questions: groupQuestions, startIndex }: { questions: AddSubQuestion[], startIndex: number }) => (
     <table className="min-w-full border border-gray-300 rounded-lg" dir="ltr">
       <thead>
         <tr className="bg-primary/10">
@@ -92,11 +94,14 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
           {groupQuestions.map((q, idx) => (
             <td key={idx} className="p-2 border text-center">
               <Input
+                ref={el => inputRefs.current[startIndex + idx] = el}
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={answers[startIndex + idx] ?? ''}
                 onChange={e => handleAnswerChange(startIndex + idx, e.target.value)}
+                onFocus={() => setFocusedInput(startIndex + idx)}
+                onBlur={() => setFocusedInput(null)}
                 disabled={disabled}
                 className={`w-full sm:w-32 mx-auto text-lg sm:text-base ${errors[startIndex + idx] ? 'border-red-500' : ''}`}
               />
@@ -113,7 +118,17 @@ export const StudentAddSubTable: React.FC<StudentAddSubTableProps> = ({ question
         </tr>
       </tbody>
     </table>
-  );
+  ), [answers, disabled, errors, handleAnswerChange, maxRows, showAnswers]);
+
+  // حفظ فوکوس بعد از رندر مجدد
+  useEffect(() => {
+    if (focusedInput !== null) {
+      const input = inputRefs.current[focusedInput];
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [answers, focusedInput]);
 
   return (
     <div className="overflow-x-auto mt-6">
