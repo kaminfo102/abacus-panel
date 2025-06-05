@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 
 interface BackupInfo {
   name: string;
@@ -31,6 +32,8 @@ export function DatabaseBackup() {
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [selectedBackup, setSelectedBackup] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const fetchBackups = async () => {
@@ -173,6 +176,48 @@ export function DatabaseBackup() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/database', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'خطای ناشناخته');
+      }
+
+      toast({
+        title: "موفق",
+        description: "فایل پشتیبان با موفقیت آپلود شد",
+      });
+
+      // Refresh the list
+      await fetchBackups();
+    } catch (error) {
+      console.error('Error uploading backup:', error);
+      toast({
+        title: "خطا",
+        description: error instanceof Error ? error.message : "در آپلود فایل پشتیبان مشکلی پیش آمده است",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   // Fetch backups on component mount
   useEffect(() => {
     fetchBackups();
@@ -211,6 +256,24 @@ export function DatabaseBackup() {
             >
               بروزرسانی لیست
             </Button>
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                ref={fileInputRef}
+                className="hidden"
+                id="backup-upload"
+              />
+              <Button
+                variant="outline"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? 'در حال آپلود...' : 'آپلود نسخه پشتیبان'}
+              </Button>
+            </div>
           </div>
 
           {backups.length > 0 && (
@@ -265,6 +328,17 @@ export function DatabaseBackup() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isLoading}
+                            onClick={() => {
+                              window.location.href = `/api/admin/database?download=${encodeURIComponent(backup.path)}`;
+                            }}
+                          >
+                            دانلود
+                          </Button>
 
                           <AlertDialog>
                             <AlertDialogTrigger asChild>

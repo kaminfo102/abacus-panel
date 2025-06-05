@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Notification } from '@prisma/client';
 import path from 'path';
 import fs from 'fs';
 
@@ -36,6 +36,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const contentType = req.headers.get('content-type') || '';
+    
+    // Handle file upload
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const file = formData.get('file') as File;
+      
+      if (!file) {
+        return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      }
+
+      try {
+        const backupDir = ensureBackupDir();
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const fileName = file.name;
+        const filePath = path.join(backupDir, fileName);
+
+        // Validate file content
+        try {
+          const content = JSON.parse(buffer.toString());
+          if (!content.timestamp || !content.version || !content.data) {
+            throw new Error('Invalid backup file format');
+          }
+        } catch (error) {
+          return NextResponse.json({ 
+            error: 'Invalid backup file format',
+            details: 'The uploaded file is not a valid backup file'
+          }, { status: 400 });
+        }
+
+        // Save the file
+        fs.writeFileSync(filePath, buffer);
+
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Backup file uploaded successfully',
+          fileName: fileName
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+        return NextResponse.json({ 
+          error: 'Failed to upload backup file',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
+      }
+    }
+
+    // Handle regular backup/restore operations
     const body = await req.json();
     const { action, backupFile } = body;
 
@@ -136,7 +184,7 @@ export async function POST(req: Request) {
                   }
                 } : undefined,
                 notifications: {
-                  create: notifications.map(({ id, ...notification }) => notification)
+                  create: notifications.map(({ id, ...notification }: Notification) => notification)
                 }
               },
               include: {
@@ -193,11 +241,33 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const downloadFile = searchParams.get('download');
+
+    if (downloadFile) {
+      const backupDir = ensureBackupDir();
+      const backupFilePath = path.join(backupDir, downloadFile);
+
+      if (!fs.existsSync(backupFilePath)) {
+        return NextResponse.json({ error: 'Backup file not found' }, { status: 404 });
+      }
+
+      const fileBuffer = fs.readFileSync(backupFilePath);
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      headers.set('Content-Disposition', `attachment; filename="${downloadFile}"`);
+
+      return new NextResponse(fileBuffer, {
+        status: 200,
+        headers
+      });
     }
 
     try {
