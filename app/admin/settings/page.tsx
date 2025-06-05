@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { DatabaseBackup } from './database-backup';
 
 export default async function AdminSettings() {
   const session = await getServerSession(authOptions);
@@ -64,22 +65,7 @@ export default async function AdminSettings() {
           </CardContent>
         </Card>
         
-        <Card className="animate-fade-in delay-100">
-          <CardHeader>
-            <CardTitle>نسخه پشتیبان</CardTitle>
-            <CardDescription>
-              مدیریت نسخه‌های پشتیبان سیستم
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                از اطلاعات سیستم نسخه پشتیبان تهیه کنید
-              </p>
-              <Button variant="outline">ایجاد نسخه پشتیبان</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <DatabaseBackup />
       </div>
     </DashboardLayout>
   );
