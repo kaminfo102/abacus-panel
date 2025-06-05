@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, User, LogOut, UserCircle, Home, LayoutDashboard, Users, Calendar, Settings, Bell } from 'lucide-react';
+import { Menu, User, LogOut, UserCircle, Home, LayoutDashboard, Users, Calendar, Settings, Bell, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@prisma/client';
 import { signOut, useSession } from 'next-auth/react';
@@ -73,6 +73,7 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
     { href: `${basePath}/activities`, label: 'فعالیت‌ها', icon: Calendar, color: 'text-purple-600 dark:text-purple-400' },
     { href: `${basePath}/exams`, label: 'آزمون‌ها', icon: Calendar, color: 'text-orange-600 dark:text-orange-400' },
     { href: `${basePath}/settings`, label: 'تنظیمات', icon: Settings, color: 'text-gray-600 dark:text-gray-400' },
+    { href: `${basePath}/reports`, label: 'گزارشات', icon: BarChart, color: 'text-gray-600 dark:text-gray-400' },
   ];
 
   const studentRoutes = [
