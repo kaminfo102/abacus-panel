@@ -42,7 +42,10 @@ export default async function StudentExams() {
 
   const exams = await db.exam.findMany({
     where: { 
-      term: student.term
+      OR: [
+        { term: student.term },
+        { term: 'all' }
+      ]
     },
     orderBy: {
       createdAt: 'desc',

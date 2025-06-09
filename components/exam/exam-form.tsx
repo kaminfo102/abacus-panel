@@ -296,6 +296,9 @@ export function ExamForm({ initialData }: ExamFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="text-right">
+                        <SelectItem value="all" className="text-right">
+                          همه ترم‌ها
+                        </SelectItem>
                         {STUDENT_TERMS.map((term) => (
                           <SelectItem key={term} value={term} className="text-right">
                             {term}
@@ -304,7 +307,7 @@ export function ExamForm({ initialData }: ExamFormProps) {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      آزمون برای دانش‌آموزان این ترم قابل مشاهده خواهد بود
+                      در صورت انتخاب "همه ترم‌ها"، آزمون برای تمام دانش‌آموزان قابل مشاهده خواهد بود
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

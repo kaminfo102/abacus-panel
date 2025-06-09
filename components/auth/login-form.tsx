@@ -91,7 +91,9 @@ export function LoginForm({ role }: LoginFormProps) {
 
       toast({
         title: "ورود موفق",
-        description: "به سامانه مدیریت دانش‌آموزان خوش آمدید.",
+        description: "به سامانه آزمون آنلاین خوش آمدید.",
+        className: "bg-green-600 border-green-700 text-white",
+        duration: 3000,
       });
 
       if (isStudent) {

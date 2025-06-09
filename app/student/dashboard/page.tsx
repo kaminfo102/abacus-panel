@@ -47,20 +47,22 @@ export default async function StudentDashboard() {
     }
   });
 
-  const latestExam = await db.exam.findFirst({
-    where: { term: student.term },
-    orderBy: { createdAt: 'desc' },
-  }) as Exam | null;
-
-  // بررسی نتیجه آزمون
-  const examResult = latestExam ? await db.examResult.findUnique({
-    where: {
-      examId_studentId: {
-        examId: latestExam.id,
-        studentId: student.id,
-      },
+  const allExams = await db.exam.findMany({
+    where: { 
+      OR: [
+        { term: student.term },
+        { term: 'all' }
+      ]
     },
-  }) : null;
+    orderBy: { createdAt: 'desc' },
+  }) as Exam[];
+
+  // Get exam results for all exams
+  const examResults = await db.examResult.findMany({
+    where: {
+      studentId: student.id,
+    },
+  });
 
   return (
     <DashboardLayout requiredRole="STUDENT">
@@ -92,51 +94,64 @@ export default async function StudentDashboard() {
           </div>
         </div>
 
-        {latestExam && (
-          <Card className={`animate-pulse border-2 ${latestExam.isActive ? 'border-red-500 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20' : 'border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20'}`}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className={`text-lg font-bold ${latestExam.isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                {latestExam.isActive ? 'آزمون جدید' : 'آزمون غیرفعال'}
-              </CardTitle>
-              <Calculator className={`h-6 w-6 ${latestExam.isActive ? 'text-red-500' : 'text-gray-500'}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2 text-center">{latestExam.title}</div>
-              <div className="flex items-center justify-center gap-4 text-base font-bold text-emerald-600 dark:text-emerald-400 mb-4">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-5 w-5" />
-                  <span>زمان: {latestExam.timeLimit} دقیقه</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calculator className="h-5 w-5" />
-                  <span>سطح آزمون: {latestExam.term}</span>
-                </div>
-              </div>
-              {latestExam.isActive ? (
-                examResult ? (
-                  <div className="cursor-not-allowed">
-                    <Button 
-                      className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
-                      disabled
-                    >
-                      <AlertCircle className="h-5 w-5 ml-2" />
-                      شما در این آزمون شرکت کرده‌اید
-                    </Button>
-                  </div>
-                ) : (
-                  <ExamConfirmationDialog examId={latestExam.id} />
-                )
-              ) : (
-                <div className="cursor-not-allowed">
-                  <Button 
-                    className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
-                    disabled
-                  >
-                    <AlertCircle className="h-5 w-5 ml-2" />
-                    آزمون غیرفعال است
-                  </Button>
-                </div>
-              )}
+        {allExams.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {allExams.map((exam) => {
+              const examResult = examResults.find(r => r.examId === exam.id);
+              return (
+                <Card key={exam.id} className={`animate-fade-in border-2 ${exam.isActive ? 'border-red-500 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20' : 'border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20'}`}>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className={`text-lg font-bold ${exam.isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                      {exam.isActive ? 'آزمون فعال' : 'آزمون غیرفعال'}
+                    </CardTitle>
+                    <Calculator className={`h-6 w-6 ${exam.isActive ? 'text-red-500' : 'text-gray-500'}`} />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2 text-center">{exam.title}</div>
+                    <div className="flex items-center justify-center gap-4 text-base font-bold text-emerald-600 dark:text-emerald-400 mb-4">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-5 w-5" />
+                        <span>زمان: {exam.timeLimit} دقیقه</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calculator className="h-5 w-5" />
+                        <span>سطح: {exam.term}</span>
+                      </div>
+                    </div>
+                    {exam.isActive ? (
+                      examResult ? (
+                        <div className="cursor-not-allowed">
+                          <Button 
+                            className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
+                            disabled
+                          >
+                            <AlertCircle className="h-5 w-5 ml-2" />
+                            شما در این آزمون شرکت کرده‌اید
+                          </Button>
+                        </div>
+                      ) : (
+                        <ExamConfirmationDialog examId={exam.id} />
+                      )
+                    ) : (
+                      <div className="cursor-not-allowed">
+                        <Button 
+                          className="w-full h-12 text-lg font-bold bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg"
+                          disabled
+                        >
+                          <AlertCircle className="h-5 w-5 ml-2" />
+                          آزمون غیرفعال است
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-muted-foreground">در حال حاضر آزمونی برای ترم شما تعریف نشده است.</p>
             </CardContent>
           </Card>
         )}
