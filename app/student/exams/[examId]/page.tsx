@@ -31,7 +31,7 @@ export default async function ExamPage({ params }: ExamPageProps) {
     where: { id: params.examId },
   });
 
-  if (!exam || exam.term !== student.term) {
+  if (!exam || (exam.term !== student.term && exam.term !== 'all')) {
     redirect('/student/exams');
   }
 
