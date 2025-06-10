@@ -96,10 +96,15 @@ export function LoginForm({ role }: LoginFormProps) {
         duration: 3000,
       });
 
+      // Wait for a short moment to ensure session is established
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       if (isStudent) {
         router.push('/student/dashboard');
+        router.refresh();
       } else {
         router.push('/admin/dashboard');
+        router.refresh();
       }
     } catch (error) {
       toast({
