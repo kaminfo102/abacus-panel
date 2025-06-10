@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { ActivityForm } from '@/components/activity/activity-form';
+// import { ActivityForm } from '@/components/activity/activity-form';
 
 export default async function NewActivity() {
   const session = await getServerSession(authOptions);
@@ -21,7 +21,7 @@ export default async function NewActivity() {
           </p>
         </div>
 
-        <ActivityForm />
+        {/* <ActivityForm /> */}
       </div>
     </DashboardLayout>
   );

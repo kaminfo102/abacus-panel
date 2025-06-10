@@ -203,7 +203,7 @@ export function ExamTable({ exams }: ExamTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center">
-        <div className="relative w-full">
+        <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"

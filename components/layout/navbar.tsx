@@ -258,7 +258,9 @@ export function Navbar({ role, onMenuClick }: NavbarProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: '/' })}
+                  onClick={() => signOut({ 
+                    callbackUrl: process.env.NEXT_PUBLIC_BASE_URL || '/' 
+                  })}
                   className="flex-row-reverse text-red-600 focus:text-red-600 py-2.5"
                 >
                   <LogOut className="ml-2 h-4 w-4" />
