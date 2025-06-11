@@ -92,13 +92,20 @@ export function LoginForm({ role }: LoginFormProps) {
         return;
       }
 
-      if (result?.url) {
+      if (result?.ok) {
         toast({
           title: "ورود موفق",
           description: "به سامانه آزمون آنلاین خوش آمدید.",
           className: "bg-green-600 border-green-700 text-white",
           duration: 3000,
         });
+
+        // Clear any existing cache
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('next-auth.session-token');
+          window.localStorage.removeItem('next-auth.callback-url');
+          window.localStorage.removeItem('next-auth.csrf-token');
+        }
 
         // Use replace instead of push for more reliable navigation
         router.replace(callbackUrl);
