@@ -74,9 +74,12 @@ export function LoginForm({ role }: LoginFormProps) {
             role: 'ADMIN' 
           };
 
+      const callbackUrl = isStudent ? '/student/dashboard' : '/admin/dashboard';
+      
       const result = await signIn('credentials', {
         ...loginData,
-        redirect: false
+        redirect: false,
+        callbackUrl
       });
 
       if (result?.error) {
@@ -89,22 +92,16 @@ export function LoginForm({ role }: LoginFormProps) {
         return;
       }
 
-      toast({
-        title: "ورود موفق",
-        description: "به سامانه آزمون آنلاین خوش آمدید.",
-        className: "bg-green-600 border-green-700 text-white",
-        duration: 3000,
-      });
+      if (result?.url) {
+        toast({
+          title: "ورود موفق",
+          description: "به سامانه آزمون آنلاین خوش آمدید.",
+          className: "bg-green-600 border-green-700 text-white",
+          duration: 3000,
+        });
 
-      // Wait for a short moment to ensure session is established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (isStudent) {
-        router.push('/student/dashboard');
-        router.refresh();
-      } else {
-        router.push('/admin/dashboard');
-        router.refresh();
+        // Use replace instead of push for more reliable navigation
+        router.replace(callbackUrl);
       }
     } catch (error) {
       toast({

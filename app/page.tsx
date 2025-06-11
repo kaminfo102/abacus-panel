@@ -55,6 +55,11 @@ export default function Home() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
                   دانش‌آموزان عزیز: برای ورود به سامانه از کد ملی به عنوان نام کاربری و شماره موبایل به عنوان رمز عبور استفاده کنید.
                 </p>
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                  <p className="text-center text-blue-600 dark:text-blue-400 font-semibold">
+                    شماره پشتیبانی: <span className="text-lg">۰۸۷۹۱۰۰۲۸۴۹</span>
+                  </p>
+                </div>
               </CardFooter>
             </Card>
             <div className="md:block">

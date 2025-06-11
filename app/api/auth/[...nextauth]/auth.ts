@@ -94,6 +94,14 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Handle absolute URLs that are on the same domain
+      else if (new URL(url).origin === baseUrl) return url;
+      // Default to baseUrl
+      return baseUrl;
+    },
   },
   debug: process.env.NODE_ENV === "development",
   session: {
