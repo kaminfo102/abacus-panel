@@ -86,8 +86,19 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
   let mulDivQuestions: any[] = [];
   try {
     if (exam.addSubQuestions) addSubQuestions = typeof exam.addSubQuestions === 'string' ? JSON.parse(exam.addSubQuestions) : exam.addSubQuestions;
-    if (exam.mulDivQuestions) mulDivQuestions = typeof exam.mulDivQuestions === 'string' ? JSON.parse(exam.mulDivQuestions) : exam.mulDivQuestions;
+    if (exam.mulDivQuestions) {
+      let tempMulDivQuestions = typeof exam.mulDivQuestions === 'string' ? JSON.parse(exam.mulDivQuestions) : exam.mulDivQuestions;
+      mulDivQuestions = tempMulDivQuestions.map((q: any) => ({
+        ...q,
+        operators: Array.isArray(q.operators) ? q.operators.map((op: string) => {
+          if (op === '*') return '×';
+          if (op === '/') return '÷';
+          return op; // Return as is if already '×' or '÷'
+        }) : [] // Default to an empty array if q.operators is not an array
+      }));
+    }
   } catch (e) {
+    console.error('Error parsing questions:', e);
     addSubQuestions = [];
     mulDivQuestions = [];
   }
@@ -253,6 +264,7 @@ export function ExamTakingForm({ exam, student }: ExamTakingFormProps) {
                 disabled={isLoading || finished || timeLeft === 0}
               />
             )}
+            {/* {console.log('Rendering StudentMulDivTable with questions:', mulDivQuestions)} */}
           </div>
           <div className="mt-6 flex flex-col items-center gap-4">
             <Button

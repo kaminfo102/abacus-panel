@@ -61,16 +61,18 @@ export const StudentMulDivTable: React.FC<StudentMulDivTableProps> = ({ question
             <tr key={idx}>
               <td className="p-2 border text-center font-bold bg-violet-700 text-white">{idx + 1}</td>
               <td className="border p-2 text-center">
-                {q.numbers.map((num, index) => (
-                  <span key={index} className="inline-flex items-center">
-                    {index > 0 && index < q.numbers.length && (
-                      <span className="mx-2 text-red-500 text-lg font-bold">
-                        {q.operators[index - 1]}
-                      </span>
-                    )}
-                    {num}
-                  </span>
-                ))}
+                <div className="flex items-center justify-center gap-2">
+                  {q.numbers.map((num, index) => (
+                    <React.Fragment key={index}>
+                      {index > 0 && (
+                        <span className="mx-3 text-red-600 text-xl font-bold select-none">
+                          {q.operators[index - 1]}
+                        </span>
+                      )}
+                      <span className="text-lg font-medium">{num}</span>
+                    </React.Fragment>
+                  ))}
+                </div>
               </td>
               <td className="p-2 border text-center">
                 <Input

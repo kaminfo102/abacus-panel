@@ -175,7 +175,8 @@ export function ExamForm({ initialData }: ExamFormProps) {
         mulDivQuestions: values.operators.some(op => op === '*' || op === '/') ? mulDivQuestions : undefined,
       };
 
-      console.log('Submitting form data:', formData);
+      console.log('Submitting form data:', JSON.stringify(formData, null, 2));
+      console.log('mulDivQuestions before submission detailed:', JSON.stringify(formData.mulDivQuestions, null, 2));
 
       const response = await fetch(url, {
         method,
